@@ -1,0 +1,90 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Health Tracker</title>
+<meta name="description" content="Track food, weight and daily limits. Works offline.">
+<meta name="theme-color" content="#2f7d5b">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icons/icon-192.png" type="image/png">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Health Tracker">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<header class="appbar">
+  <h1 id="title">Today</h1>
+  <a id="streakchip" class="streakchip" href="#badges" aria-label="Current streak">🔥 0</a>
+</header>
+
+<main>
+  <section id="view-today" class="view"></section>
+
+  <section id="view-foods" class="view" hidden>
+    <div id="addbanner" class="banner" hidden></div>
+    <div class="row spread">
+      <button class="btn primary" data-action="describe-open">✎ Describe a food</button>
+    </div>
+    <input id="q" type="search" class="bigsearch" placeholder="Search foods and drinks…" autocomplete="off" aria-label="Search foods and drinks">
+    <details id="filters" class="filters">
+      <summary id="filtersSummary">Filters &amp; sorting</summary>
+      <div class="controls">
+        <select id="cuisine" aria-label="Cuisine or type"><option value="">All cuisines</option></select>
+        <select id="category" aria-label="Category"><option value="">All categories</option></select>
+        <select id="sodium" aria-label="Sodium level">
+          <option value="">Any sodium</option><option value="low">Low sodium (≤300 mg/serving)</option>
+          <option value="medium">Medium sodium (301–600 mg)</option><option value="high">High sodium (&gt;600 mg)</option>
+        </select>
+        <select id="sugar" aria-label="Sugar level">
+          <option value="">Any sugar</option><option value="low">Low sugar</option>
+          <option value="medium">Medium sugar</option><option value="high">High sugar</option>
+        </select>
+        <input id="maxKcal" type="number" min="0" step="50" placeholder="Max kcal / serving" aria-label="Max calories">
+        <input id="maxSodium" type="number" min="0" step="100" placeholder="Max sodium mg / serving" aria-label="Max sodium">
+        <select id="sort" aria-label="Sort by">
+          <option value="name">Sort: name</option>
+          <option value="energy_kcal">Calories (high → low)</option>
+          <option value="protein_g">Protein (high → low)</option>
+          <option value="sodium_mg">Sodium (high → low)</option>
+          <option value="cholesterol_mg">Cholesterol (high → low)</option>
+        </select>
+      </div>
+      <div class="toggles">
+        <label><input type="checkbox" id="noChol"> Exclude high cholesterol</label>
+        <label><input type="checkbox" id="noSat"> Exclude high sat fat</label>
+        <button id="reset" type="button" class="btn small">Reset filters</button>
+      </div>
+    </details>
+
+    <div id="browse"></div>
+
+    <div id="resultsWrap" hidden>
+      <div class="meta" id="count"></div>
+      <div id="results" aria-live="polite"></div>
+      <button id="more" class="btn" type="button" data-action="more" hidden>Show more</button>
+    </div>
+    <footer id="note" class="fine"></footer>
+  </section>
+
+  <section id="view-weight" class="view" hidden></section>
+  <section id="view-badges" class="view" hidden></section>
+  <section id="view-profile" class="view" hidden></section>
+</main>
+
+<nav class="tabbar" aria-label="Main">
+  <a href="#today" data-tab="today"><span aria-hidden="true">📋</span>Today</a>
+  <a href="#foods" data-tab="foods"><span aria-hidden="true">🔍</span>Foods</a>
+  <a href="#weight" data-tab="weight"><span aria-hidden="true">⚖️</span>Weight</a>
+  <a href="#badges" data-tab="badges"><span aria-hidden="true">🏅</span>Badges</a>
+  <a href="#profile" data-tab="profile"><span aria-hidden="true">👤</span>Profile</a>
+</nav>
+
+<dialog id="sheet" aria-label="Add food"></dialog>
+<div id="toast" role="status" aria-live="polite"></div>
+<script type="module" src="js/app.js"></script>
+</body>
+</html>

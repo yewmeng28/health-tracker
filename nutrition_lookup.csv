@@ -1,0 +1,158 @@
+id,name,serving_g,energy_kcal,protein_g,carbohydrate_g,total_fat_g,saturated_fat_g,trans_fat_g,fibre_g,sugars_g,sodium_mg,cholesterol_mg,potassium_mg,calcium_mg,iron_mg,confidence,source_name,source_url,source_serving_note,notes
+food-001,Bak chor mee with fish maw,380,,,,,,,,,,,,,,low,,,,No verified nutrition match established for this exact preparation.
+food-002,Mee siam,380,536,18.6,92.3,10.3,,,,,,,,,,medium,"Energy Content and Nutrient Profiles of Frequently Consumed Meals in Singapore (2021)",https://pmc.ncbi.nlm.nih.gov/articles/PMC8304763/,"566g; 590 kJ/100g; protein 4.9g/100g; fat 2.7g/100g; carbohydrate 24.3g/100g","Laboratory-measured mee siam; scaled to 380g. Energy converted from kJ."
+food-003,Mee rebus with egg,430,,,,,,,,,,,,,,low,,,,Study reports mee rebus without the specified egg topping; no verified egg-inclusive match established.
+food-004,Mee soto,420,643,38.5,85.2,12.2,,,,,1193,,,,,medium,"Energy Content and Nutrient Profiles of Frequently Consumed Meals in Singapore (2021)",https://pmc.ncbi.nlm.nih.gov/articles/PMC8304763/,"281g; 640 kJ/100g; protein 9.2g/100g; fat 2.9g/100g; carbohydrate 20.3g/100g; sodium 798mg per study serving","Study match scaled to 420g; sodium scaled from reported study serving."
+food-005,Soto ayam,400,460,24.8,76.4,6,,,,,,,,,,medium,"Energy Content and Nutrient Profiles of Frequently Consumed Meals in Singapore (2021)",https://pmc.ncbi.nlm.nih.gov/articles/PMC8304763/,"693g; 481 kJ/100g; protein 6.2g/100g; fat 1.5g/100g; carbohydrate 19.1g/100g","Laboratory-measured soto ayam; scaled to 400g. Energy converted from kJ."
+food-006,Lontong sayur,400,567,32.8,49.6,26.4,,,,,,,,,,low,"Energy Content and Nutrient Profiles of Frequently Consumed Meals in Singapore (2021)",https://pmc.ncbi.nlm.nih.gov/articles/PMC8304763/,"269g; 593 kJ/100g; protein 8.2g/100g; fat 6.6g/100g; carbohydrate 12.4g/100g","Study entry is Lotong, not necessarily lontong sayur with vegetable gravy; comparable-dish estimate."
+food-007,Ayam penyet with rice,450,913,40.1,97.7,40.5,,,,,439,,,,,medium,"Energy Content and Nutrient Profiles of Frequently Consumed Meals in Singapore (2021)",https://pmc.ncbi.nlm.nih.gov/articles/PMC8304763/,"425g; 849 kJ/100g; protein 8.9g/100g; fat 9.0g/100g; carbohydrate 21.7g/100g; sodium 415mg per study serving","Laboratory-measured ayam penyet; scaled to 450g. Energy converted from kJ."
+food-008,Ayam bakar with rice,450,,,,,,,,,,,,,,low,,,,No verified exact match established; ayam penyet is not an equivalent grilled preparation.
+food-009,Ikan bakar with rice,400,,,,,,,,,,,,,,low,,,,No verified exact match established; ikan penyet is not an equivalent grilled preparation.
+food-010,Nasi goreng kampung,350,668,24.9,86.1,24.9,,,,,645,,,,,medium,"Energy Content and Nutrient Profiles of Frequently Consumed Meals in Singapore (2021)",https://pmc.ncbi.nlm.nih.gov/articles/PMC8304763/,"405g; 798 kJ/100g; protein 7.1g/100g; fat 7.1g/100g; carbohydrate 24.6g/100g; sodium 746mg per study serving","Laboratory-measured nasi kampung goreng; scaled to 350g. Energy converted from kJ."
+food-011,Nasi goreng seafood,380,,,,,,,,,,,,,,low,,,,No verified exact match established.
+food-012,Nasi goreng ikan bilis,350,,,,,,,,,,,,,,low,,,,No verified exact match established; nasi kampung goreng is not an exact ikan bilis preparation.
+food-013,Mee goreng mamak with egg,400,,,,,,,,,,,,,,low,,,,Study reports economical mee goreng, not the specified mamak preparation with egg.
+food-014,Maggi goreng,350,,,,,,,,,,,,,,low,,,,Economical mee goreng is not a verified match for branded instant-noodle Maggi goreng.
+food-015,Maggie curry noodles with egg,400,,,,,,,,,,,,,,low,,,,No verified exact match established; packaged noodle brand and egg quantity unspecified.
+food-016,Kway teow soup,400,,,,,,,,,,,,,,low,,,,No verified exact match established; soup contents and protein toppings unspecified.
+food-017,Yee mee soup,400,,,,,,,,,,,,,,low,,,,No verified exact match established.
+food-018,Lor mee,400,,,,,,,,,,,,,,low,,,,No verified exact match established in the sources opened.
+food-019,Lor bak with rice,400,,,,,,,,,,,,,,low,,,,No verified exact match established.
+food-020,"Ngoh hiang, 3 pieces",150,,,,,,,,,,,,,,low,,,,No verified three-piece serving match established.
+food-021,Five-spice pork roll,150,,,,,,,,,,,,,,low,,,,No verified exact match established.
+food-022,Oyster mee sua,350,,,,,,,,,,,,,,low,,,,No verified exact match established.
+food-023,Mee sua with chicken,400,,,,,,,,,,,,,,low,,,,No verified exact match established.
+food-024,Fish porridge,400,,,,,,,,,,,,,,low,,,,No verified exact match established.
+food-025,Sliced fish bee hoon soup,400,,,,,,,,,,,,,,low,,,,No verified exact match established.
+food-026,Pig organ soup,350,,,,,,,,,,,,,,low,,,,No verified primary database match established.
+food-027,Pig trotter vinegar,250,,,,,,,,,,,,,,low,,,,No verified exact match established.
+food-028,Hakka yong tau foo,350,,,,,,,,,,,,,,low,,,,No verified exact match established.
+food-029,Thunder tea rice,400,,,,,,,,,,,,,,low,,,,No verified exact match established in the opened primary study.
+food-030,Lei cha brown rice,400,,,,,,,,,,,,,,low,,,,No verified exact match established.
+food-031,Mee rebus with begedil,450,,,,,,,,,,,,,,low,,,,Study reports mee rebus without the specified begedil topping; no verified topping-inclusive match established.
+food-032,"Rojak, local fruit and dough fritters",250,,,,,,,,,,,,,,low,,,,No verified exact match established.
+food-033,Indian rojak,300,,,,,,,,,,,,,,low,,,,No verified exact match established.
+food-034,Prata with cheese,130,,,,,,,,,,,,,,low,,,,Study reports plain roti prata and egg prata, not cheese prata.
+food-035,Prata with onion,120,,,,,,,,,,,,,,low,,,,Study reports plain roti prata; onion topping is not included.
+food-036,Prata with egg and cheese,170,,,,,,,,,,,,,,low,,,,Study reports egg prata, not egg-and-cheese prata.
+food-037,Milo dinosaur,350,,,,,,,,,,,,,,low,,,,No verified manufacturer or primary database match established for this hawker-style drink.
+food-078,Char siew rice,400,740,29.4,111.3,19.6,14.6,,7.2,,1077,68.5,,,,medium,HealthXchange / SingHealth,https://www.healthxchange.sg/food-nutrition/food-tips/best-worst-singapore-hawker-chinese-food-duck-rice-fishball-noodle,"327 g serving: 605 kcal, 24 g protein, 91 g carbohydrate, 16 g fat, 11.9 g saturated fat, 5.9 g fibre, 56 mg cholesterol, 880 mg sodium","Scaled proportionally from the published 327 g char siew rice serving."
+food-079,Sio bak rice,400,,,,,,,,,,,,,,,,
+food-080,Hakka abacus seeds,250,,,,,,,,,,,,,,,,
+food-081,Hakka stuffed tofu,250,,,,,,,,,,,,,,,,
+food-082,Hakka salt-baked chicken,180,,,,,,,,,,,,,,,,
+food-083,Hakka braised pork with preserved mustard greens,220,,,,,,,,,,,,,,,,
+food-084,Hakka pork belly with taro,250,,,,,,,,,,,,,,,,
+food-085,Steamed fish with black bean,180,,,,,,,,,,,,,,,,
+food-086,Steamed fish with preserved radish,180,,,,,,,,,,,,,,,,
+food-087,Steamed sea bass with soy and ginger,180,,,,,,,,,,,,,,,,
+food-088,Steamed cod with ginger,180,,,,,,,,,,,,,,,,
+food-089,Pan-fried threadfin,180,,,,,,,,,,,,,,,,
+food-090,Braised pomfret,200,202,19.6,14.4,7.2,0.2,0,3.6,6.4,768,0,,,,low,Diet Camera,https://dietcamera.doinglab.com/food/braised-pomfret/,"100 g serving: 101 kcal, 9.8 g protein, 7.2 g carbohydrate, 3.6 g fat, 0.1 g saturated fat, 1.8 g fibre, 3.2 g sugars, 384 mg sodium","Scaled from a Korean braised-pomfret listing; recipe and seasoning may differ."
+food-091,Fish maw soup,300,,,,,,,,,,,,,,,,
+food-092,Sea cucumber with mushrooms,220,,,,,,,,,,,,,,,,
+food-093,Braised abalone with mushrooms,180,,,,,,,,,,,,,,,,
+food-094,Prawn paste chicken,200,,,,,,,,,,,,,,,,
+food-095,Cantonese soy sauce chicken rice,400,,,,,,,,,,,,,,,,
+food-096,Cantonese roast duck rice,400,,,,,,,,,,,,,,,,
+food-097,Steamed chicken with wolfberries,200,,,,,,,,,,,,,,,,
+food-098,Drunken chicken,180,,,,,,,,,,,,,,,,
+food-099,White-cut chicken,180,,,,,,,,,,,,,,,,
+food-100,Ginger scallion chicken,200,,,,,,,,,,,,,,,,
+food-101,Chicken with black fungus,250,,,,,,,,,,,,,,,,
+food-102,Chicken with cashew nuts,250,,,,,,,,,,,,,,,,
+food-103,Lemon chicken,250,,,,,,,,,,,,,,,,
+food-104,Salt and pepper pork chops,220,,,,,,,,,,,,,,,,
+food-105,Dongpo pork,180,,,,,,,,,,,,,,,,
+food-106,Red-braised pork belly,180,,,,,,,,,,,,,,,,
+food-107,Pork ribs with black bean sauce,220,,,,,,,,,,,,,,,,
+food-108,Steamed pork ribs with pumpkin,220,,,,,,,,,,,,,,,,
+food-109,Pork ribs with bitter gourd,250,,,,,,,,,,,,,,,,
+food-110,Minced pork with preserved olive vegetables,180,,,,,,,,,,,,,,,,
+food-111,Pork and tofu stir-fry,250,,,,,,,,,,,,,,,,
+food-112,Beef with ginger and spring onion,220,,,,,,,,,,,,,,,,
+food-113,Beef with black bean sauce,250,,,,,,,,,,,,,,,,
+food-114,Beef brisket and daikon stew,300,,,,,,,,,,,,,,,,
+food-115,Beef tomato stir-fry,250,,,,,,,,,,,,,,,,
+food-116,Chinese braised beef noodle soup,550,,,,,,,,,,,,,,,,
+food-117,Dan dan noodles,400,,,,,,,,,,,,,,,,
+food-118,Sichuan dan dan noodles,350,,,,,,,,,,,,,,,,
+food-119,Chongqing spicy noodles,400,,,,,,,,,,,,,,,,
+food-120,Hot pot, sliced beef and vegetables,450,,,,,,,,,,,,,,,,
+food-121,Hot pot, fish balls and tofu,450,,,,,,,,,,,,,,,,
+food-122,Hot pot, pork and napa cabbage,450,,,,,,,,,,,,,,,,
+food-123,Chinese tomato egg noodles,400,,,,,,,,,,,,,,,,
+food-124,Scallion oil noodles,300,,,,,,,,,,,,,,,,
+food-125,Zhajiangmian,400,,,,,,,,,,,,,,,,
+food-126,Shanghai fried noodles,400,,,,,,,,,,,,,,,,
+food-127,Beef chow fun,400,760,28,88,34,,,,,,,,,,low,EatCam stir-fried food reference,https://eatcam.whaloom.com/food/cook-stir-fried/,"100 g reference: 190 kcal, 7 g protein, 22 g carbohydrate, 8.5 g fat","Scaled to 400 g from a generic dry-fried beef chow fun reference; recipe and oil content vary."
+food-128,Singapore-style vermicelli,350,508,8.8,87.5,14,,,,,,,,,,low,EatCam stir-fried food reference,https://eatcam.whaloom.com/food/cook-stir-fried/,"100 g reference: 145 kcal, 2.5 g protein, 25 g carbohydrate, 4 g fat","Scaled from a generic stir-fried vermicelli reference; Singapore-style versions may contain egg, prawns, meat and additional oil."
+food-129,Steamed pork bun, 1 piece,100,220,10.5,30,6.5,,,,,,,,,,low,EatCam steamed food reference,https://eatcam.whaloom.com/food/cook-steamed/,"100 g reference: 220 kcal, 10.5 g protein, 30 g carbohydrate, 6.5 g fat","Generic steamed pork bun estimate; filling and bun size vary."
+food-130,Char siu bao, 1 piece,100,245,9,42,5,,,,,,,,,,low,EatCam steamed food reference,https://eatcam.whaloom.com/food/cook-steamed/,"100 g reference: 245 kcal, 9 g protein, 42 g carbohydrate, 5 g fat","Generic steamed char siu bao estimate."
+food-131,Vegetable steamed bun, 1 piece,100,195,8,32,4.5,,,,,,,,,,low,EatCam steamed food reference,https://eatcam.whaloom.com/food/cook-steamed/,"100 g reference: 195 kcal, 8 g protein, 32 g carbohydrate, 4.5 g fat","Used vegetable-pork bun as a close proxy; vegetarian fillings may differ."
+food-132,Lotus paste bun, 1 piece,100,285,6,48,7,,,,,,,,,,low,EatCam steamed food reference,https://eatcam.whaloom.com/food/cook-steamed/,"100 g reference: 285 kcal, 6 g protein, 48 g carbohydrate, 7 g fat","Generic lotus seed paste bun estimate."
+food-133,Red bean bun, 1 piece,100,240,5.2,50,2.8,,,,,,,,,,low,EatCam steamed food reference,https://eatcam.whaloom.com/food/cook-steamed/,"100 g reference: 240 kcal, 5.2 g protein, 50 g carbohydrate, 2.8 g fat","Generic steamed red bean bun estimate."
+food-134,Sesame ball, 2 pieces,100,,,,,,,,,,,,,,,,
+food-135,Egg tart, 1 piece,70,,,,,,,,,,,,,,,,
+food-136,Pineapple bun, 1 piece,90,,,,,,,,,,,,,,,,
+food-137,Cocktail bun, 1 piece,90,,,,,,,,,,,,,,,,
+food-138,Rice noodle roll with shrimp,180,,,,,,,,,,,,,,,,
+food-139,Rice noodle roll with beef,180,,,,,,,,,,,,,,,,
+food-140,Steamed shrimp dumplings, 4 pieces,120,214,13.2,21.6,7.2,,,,,,,,,,low,EatCam steamed food reference,https://eatcam.whaloom.com/food/cook-steamed/,"100 g reference: 178 kcal, 11 g protein, 18 g carbohydrate, 6 g fat","Scaled to 120 g from a generic steamed shrimp dumpling reference."
+food-141,Pork siu mai, 4 pieces,120,282,13.2,21.6,14.4,,,,,,,,,,low,EatCam steamed food reference,https://eatcam.whaloom.com/food/cook-steamed/,"100 g reference: 235 kcal, 11 g protein, 18 g carbohydrate, 12 g fat","Scaled to 120 g from a generic steamed pork siu mai reference."
+food-142,Steamed pork ribs, dim sum,120,,,,,,,,,,,,,,,,
+food-143,Chicken feet with black bean, dim sum,120,,,,,,,,,,,,,,,,
+food-144,Baked BBQ pork pastry,90,,,,,,,,,,,,,,,,
+food-145,Turnip cake, 2 pieces,150,,,,,,,,,,,,,,,,
+food-146,Steamed lotus leaf rice,250,563,17.5,80,18.8,,,,,,,,,,low,EatCam steamed food reference,https://eatcam.whaloom.com/food/cook-steamed/,"100 g reference: 225 kcal, 7 g protein, 32 g carbohydrate, 7.5 g fat","Scaled to 250 g from a generic sticky rice in lotus leaf reference; fillings vary."
+food-147,Glutinous rice ball soup,220,,,,,,,,,,,,,,,,
+food-148,Black sesame soup,220,,,,,,,,,,,,,,,,
+food-149,Mango pomelo sago,250,,,,,,,,,,,,,,,,
+food-150,Grass jelly with sweet potato,250,,,,,,,,,,,,,,,,
+food-151,Eight treasure congee,300,,,,,,,,,,,,,,,,
+food-152,Pumpkin millet porridge,300,,,,,,,,,,,,,,,,
+food-153,Chicken congee,400,,,,,,,,,,,,,,,,
+food-154,Fish congee with ginger,400,,,,,,,,,,,,,,,,
+food-155,Century egg congee,400,,,,,,,,,,,,,,,,
+food-156,Stir-fried bitter gourd with egg,220,,,,,,,,,,,,,,,,
+food-157,Stir-fried French beans with minced pork,220,,,,,,,,,,,,,,,,
+food-158,Stir-fried celery with cashews,200,,,,,,,,,,,,,,,"","","","No sufficiently close verified nutrition entry found; celery-only data would not represent the cashews and cooking oil."
+food-159,Stir-fried lotus root,180,153,2.7,19.8,7.6,,,,,,,,,,low,EatCam,https://eatcam.whaloom.com/food/cook-stir-fried/,"85 kcal, 1.5 g protein, 11 g carbohydrate and 4.2 g fat per 100 g","Scaled from reference estimate for stir-fried lotus root slices; recipe and oil quantities vary."
+food-160,Braised napa cabbage,200,,,,,,,,,,,,,,,"","","","No sufficiently close verified prepared-dish entry found."
+food-161,Garlic choy sum,180,,,,,,,,,,,,,,,"","","","Raw choy sum composition would not account for cooking oil, garlic or seasoning."
+food-162,Oyster sauce lettuce,180,117,3.2,9.9,6.3,,,,,,,,,,low,EatCam,https://eatcam.whaloom.com/food/cook-stir-fried/,"65 kcal, 1.8 g protein, 5.5 g carbohydrate and 3.5 g fat per 100 g","Scaled from oyster sauce lettuce reference estimate; recipe and sauce quantities vary."
+food-163,Stir-fried water spinach,180,171,4.1,9.2,11.2,,,,,,,,,,low,EatCam,https://eatcam.whaloom.com/food/cook-stir-fried/,"95 kcal, 2.3 g protein, 5.1 g carbohydrate and 6.2 g fat per 100 g","Scaled from water spinach with garlic reference estimate."
+food-164,Chinese eggplant with garlic sauce,220,242,2.6,13.2,17.6,,,,,,,,,,low,EatCam,https://eatcam.whaloom.com/food/cook-stir-fried/,"110 kcal, 1.2 g protein, 6 g carbohydrate and 8 g fat per 100 g","Scaled from generic stir-fried eggplant; garlic sauce recipe may differ."
+food-165,Braised eggplant with minced pork,250,,,,,,,,,,,,,,,"","","","No sufficiently close verified prepared-dish entry found."
+food-166,Steamed pumpkin with garlic,180,,,,,,,,,,,,,,,"","","","Plain pumpkin composition would not account for added garlic, oil or seasoning."
+food-167,Stir-fried snow peas,160,152,4.8,10.4,8,,,,,,,,,,low,EatCam,https://eatcam.whaloom.com/food/cook-stir-fried/,"95 kcal, 3 g protein, 6.5 g carbohydrate and 5 g fat per 100 g","Scaled from stir-fried snow peas reference estimate."
+food-168,Stir-fried bean sprouts with chives,180,130,4.7,10.8,7.2,,,,,,,,,,low,EatCam,https://eatcam.whaloom.com/food/cook-stir-fried/,"72 kcal, 2.6 g protein, 6 g carbohydrate and 4 g fat per 100 g","Scaled from generic stir-fried bean sprouts; chives may alter the composition."
+food-169,Chinese cucumber salad,150,,,,,,,,,,,,,,,"","","","No sufficiently close verified prepared-dish entry found."
+food-170,Wood ear mushroom salad,120,,,,,,,,,,,,,,,"","","","No sufficiently close verified prepared-dish entry found; dressing composition is unknown."
+food-171,Cucumber with smashed garlic,150,,,,,,,,,,,,,,,"","","","Plain cucumber data would not account for dressing, garlic or seasoning."
+food-172,Chinese potato and green pepper stir-fry,220,,,,,,,,,,,,,,,"","","","No sufficiently close verified prepared-dish entry found."
+food-173,Braised daikon with dried shrimp,200,,,,,,,,,,,,,,,"","","","No sufficiently close verified prepared-dish entry found; dried shrimp and braising liquid affect sodium and nutrients."
+food-174,Japanese pork shogayaki,300,,,,,,,,,,,,,,,"","","","No verified recipe-specific nutrition data with a known source serving weight found."
+food-175,Japanese chicken nanban,250,,,,,,,,,,,,,,,"","","","No verified recipe-specific nutrition data with a known source serving weight found."
+food-176,Chicken yakitori, 2 skewers,100,,,,,,,,,,,,,,,"","","","No verified nutrition data for a comparable skewer serving found."
+food-177,Negima yakitori, 2 skewers,110,,,,,,,,,,,,,,,"","","","No verified nutrition data for a comparable negima serving found."
+food-178,Tsukune chicken meatballs, 2 skewers,120,,,,,,,,,,,,,,,"","","","No verified nutrition data for a comparable tsukune serving found."
+food-179,Grilled saba set meal,400,,,,,,,,,,,,,,,"","","","Set-meal rice, sides and fish portions vary; no matching verified serving data found."
+food-180,Grilled hokke set meal,400,,,,,,,,,,,,,,,"","","","Set-meal rice, sides and fish portions vary; no matching verified serving data found."
+food-181,Japanese grilled mackerel,160,,,,,,,,,,,,,,,"","","","Generic mackerel composition would not reliably represent the cooked fish portion and preparation."
+food-182,Japanese grilled eel (unagi) rice,350,,,,,,,,,,,,,,,"","","","No verified nutrition data for a comparable eel-rice serving found."
+food-183,Unagi donburi,400,,,,,,,,,,,,,,,"","","","No verified nutrition data for a comparable unagi donburi serving found."
+food-184,Chirashi don,350,,,,,,,,,,,,,,,"","","","Fish selection, rice quantity and toppings vary; no matching verified serving data found."
+food-185,Poke-style salmon rice bowl,400,,,,,,,,,,,,,,,"","","","Salmon, rice, sauces and toppings vary; no matching verified serving data found."
+food-186,Japanese seafood donburi,400,,,,,,,,,,,,,,,"","","","Seafood selection, rice quantity and toppings vary; no matching verified serving data found."
+food-187,Tekka don (tuna rice bowl),350,,,,,,,,,,,,,,,"","","","No verified nutrition data for a comparable tuna rice bowl serving found."
+food-188,Kaisendon,350,,,,,,,,,,,,,,,"","","","Seafood selection, rice quantity and toppings vary; no matching verified serving data found."
+food-189,Japanese curry with pork katsu,500,,,,,,,,,,,,,,,"","","","No verified nutrition data for a comparable curry-katsu serving found."
+food-190,Japanese curry with beef,450,,,,,,,,,,,,,,,"","","","No verified recipe-specific nutrition data with a known source serving weight found."
+food-191,Japanese curry with chicken,450,,,,,,,,,,,,,,,"","","","No verified recipe-specific nutrition data with a known source serving weight found."
+food-192,Japanese curry udon,450,,,,,,,,,,,,,,,"","","","No verified recipe-specific nutrition data with a known source serving weight found."
+food-193,Cold soba with tempura,350,,,,,,,,,,,,,,,"","","","Soba and tempura quantities vary; no matching verified serving data found."
+food-194,Kitsune udon,450,,,,,,,,,,,,,,,"","","","No verified recipe-specific nutrition data with a known source serving weight found."
+food-195,Nabeyaki udon,550,,,,,,,,,,,,,,,"","","","Broth, noodles and toppings vary; no matching verified serving data found."
+food-196,Yakisoba,350,,,,,,,,,,,,,,,"","","","No verified recipe-specific nutrition data with a known source serving weight found."
+food-197,Yaki udon,350,,,,,,,,,,,,,,,"","","","No verified recipe-specific nutrition data with a known source serving weight found."
