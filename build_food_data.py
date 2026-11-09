@@ -4,7 +4,7 @@ from datetime import date
 from pathlib import Path
 
 from alcohol_data import (COCKTAIL_SERVING_ML, ETHANOL_DENSITY, SERVINGS, SG_STANDARD_DRINK_G, SODIUM, drinks)
-from foods_extra import NOTES, PIECES, SERVING_OPTIONS, foods
+from foods_extra import NOTES, PIECES, SERVING_OPTIONS, SWEETNESS, SWEETNESS_OPTIONS, foods
 from lookup_loader import NUM, load_lookup, validate
 from profiles import FIELDS, OVERRIDES, profiles
 
@@ -156,6 +156,8 @@ def add_piece_options(e):
 
 for _e in entries:
     add_piece_options(_e)
+    if _e["name"] in SWEETNESS:                       # drinks with a "less sweet" / "kosong" choice
+        _e["sweetness"] = {"added_sugar_g": SWEETNESS[_e["name"]], "options": SWEETNESS_OPTIONS}
 
 # ---- Alcoholic drinks: ids use a "drink-" prefix so adding foods never shifts them ----
 def alcohol_entry(idx, spec):

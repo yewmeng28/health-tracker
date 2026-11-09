@@ -175,7 +175,10 @@ try {
   await go("#foods");
   await ev(`(() => { const q = document.querySelector('#q'); q.value = 'tiger beer'; q.dispatchEvent(new Event('input', {bubbles:true})); })()`);
   await sleep(200);
-  await ev(`(() => { const s = document.querySelector('.serving-select'); s.value = '500'; s.dispatchEvent(new Event('change', {bubbles:true})); })()`);
+  check("food cards are simple until 'More info' is tapped", await ev(`document.querySelectorAll('#results .nutrients').length === 0`));
+  await ev(`document.querySelector('#results [data-action="toggle-info"]').click()`);
+  await sleep(150);
+    await ev(`(() => { const s = document.querySelector('.serving-select'); s.value = '500'; s.dispatchEvent(new Event('change', {bubbles:true})); })()`);
   await sleep(150);
   check("pint serving rescales Tiger to ~2 std drinks", /2\.0 standard drinks/.test(await text("#results")), await text("#results"));
 

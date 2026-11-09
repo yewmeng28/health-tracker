@@ -80,7 +80,7 @@ function foodDetail(state, info, today) {
   const { ev, t, totals, entries } = info;
   if (!t) return `<p class="muted">Set up your profile to see targets for this day.</p>`;
   const k = ev.checks[0];
-  const flagged = ev.checks.filter(c => c.status !== "ok" && (c.streak || c.key === "kcal" || c.key === "protein" || c.key === "fibre"));
+  const flagged = ev.checks.filter(c => c.status === "over" || (c.status === "under" && (c.streak || c.key === "kcal" || c.key === "protein" || c.key === "fibre")));
   const flags = flagged.map(c => {
     const u = c.unit === "std drinks" ? " std drinks" : c.unit === "kcal" ? " kcal" : " " + c.unit;
     const lim = c.status === "over" ? `limit ${fmt(c.max, c.unit === "std drinks" ? 1 : 0)}` : `minimum ${fmt(c.min)}`;

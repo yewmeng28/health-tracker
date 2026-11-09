@@ -31,7 +31,15 @@ An offline-capable, installable app for tracking food, weight and daily limits, 
    browse-by-type chips) instead of a long list; the full list only appears when you search, filter or tap a type. Each mealtime on Today has a
    **★ Favourites** button for one-tap logging.
 
-Plus: searchable/filterable food database (sodium, sugar, cholesterol filters), drink serving sizes (can, pint, jug, shot…),
+8. **Meal comparison** – build 2–5 possible meals (search foods, describe them, or copy from your log), see them side by side with the best
+   value per nutrient marked, how each fits your remaining limits for the day, and a verdict explaining which is the better choice and what
+   it gives up. **Go with this** logs the chosen meal to a mealtime. Open it from the Foods tab or the link at the bottom of Today.
+9. **Weight on the Today dashboard** – today's weight, or your last weigh-in with a reminder and a one-tap "Log now" box.
+10. **Display settings** (Profile) – show all nutrients, or tick just the ones you want on Today, food details and comparisons. Hidden
+    nutrients are still tracked for limits and streaks.
+
+Plus: sweetness choices for drinks (regular, less sweet / *siew dai*, no added sugar / *kosong*), hawker/kopitiam drinks, simple food cards
+with a "More info" button, a search clear button, no pinch-zoom on mobile, searchable/filterable food database (sodium, sugar, cholesterol filters), drink serving sizes (can, pint, jug, shot…),
 backup export/import, offline use after the first load.
 
 ## Run it
@@ -56,6 +64,7 @@ To install it as an app, host it over **HTTPS** (e.g. GitHub Pages, Netlify, Clo
 | `index.html`, `styles.css` | App shell and styles |
 | `js/app.js` | Routing, Foods tab, log sheet, "describe it" sheet, event handling |
 | `js/views.js` | HTML for Today / Weight / Badges / Profile tabs |
+| `js/compare.js`, `js/nutrients.js` | Meal-comparison engine; nutrient list and display preferences |
 | `js/favorites.js` | Favourite / recently-logged helpers |
 | `js/calendar.js` | Month calendar, day colours and day-detail panel (food and weight) |
 | `js/calc.js` | BMR/TDEE, targets, day evaluation |
@@ -66,7 +75,7 @@ To install it as an app, host it over **HTTPS** (e.g. GitHub Pages, Netlify, Clo
 | `food_nutrition.json` | Generated food database |
 | `profiles.py`, `foods_extra.py`, `alcohol_data.py`, `lookup_loader.py`, `build_food_data.py` | Database build pipeline |
 | `nutrition_lookup.csv`, `LLM_DATA_PROMPT.md`, `dish_names.txt` | Sourced nutrition values and the prompt/list used to collect them |
-| `tests/` | Node tests (`node --test tests/calc.test.mjs tests/estimator.test.mjs tests/views.test.mjs tests/features.test.mjs tests/favorites.test.mjs tests/boot.test.mjs`; `boot.test.mjs` boots `js/app.js` against a small fake DOM and walks the main flows) and a browser smoke test (`node tests/e2e.mjs`, needs Chrome) |
+| `tests/` | Node tests (`node --test tests/calc.test.mjs tests/estimator.test.mjs tests/views.test.mjs tests/features.test.mjs tests/favorites.test.mjs tests/compare.test.mjs tests/boot.test.mjs`; `boot.test.mjs` boots `js/app.js` against a small fake DOM and walks the main flows) and a browser smoke test (`node tests/e2e.mjs`, needs Chrome) |
 
 ## Rebuild the database
 
@@ -83,6 +92,7 @@ field by field (rows must pass a calories-vs-macros sanity check). Then bump `VE
 - Sodium levels: `sodium_level` per 100 g (low ≤ 120 mg, high > 600 mg); `sodium_serving_level` per serving (low ≤ 300 mg, high > 600 mg).
 - Sugar levels per 100 g: low ≤ 5 g, high > 15 g. Sugars are *total* sugars (fruit and milk included).
 - Per-piece info: foods whose name states a count ("2 slices", "5 pieces") get a `piece` {label, grams} and `serving_options` automatically; others are listed in `PIECES` in `foods_extra.py`.
+- Sweetness: drinks with a reducible sugar amount (`SWEETNESS` in `foods_extra.py`) get `sweetness {added_sugar_g, options}`; choosing less sweet / no added sugar removes that share of sugars, carbs and calories (4 kcal/g).
 - Drinks: ids `drink-NNN`, amounts in ml, `alcohol_g`, `abv_percent`, `serving_options`; 1 standard drink = 10 g alcohol (HPB).
   Energy = 7 kcal/g alcohol + 4 kcal/g carbs and protein.
 - Targets: sodium ≤ 2000 mg (WHO), sugars < 10% of energy, saturated fat < 10%, fibre ≥ 14 g/1000 kcal, alcohol ≤ 1 (women) / 2 (men) standard

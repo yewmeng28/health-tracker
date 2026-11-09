@@ -1,10 +1,10 @@
 // Service worker: makes the app work offline.
 // Bump VERSION whenever app files change so installed copies update.
-const VERSION = "v1";
+const VERSION = "v2";
 const CACHE = `health-tracker-${VERSION}`;
 const SHELL = [
   "./", "index.html", "styles.css", "manifest.webmanifest", "food_nutrition.json",
-  "js/app.js", "js/badges.js", "js/calc.js", "js/calendar.js", "js/chart.js", "js/dates.js", "js/estimator.js", "js/favorites.js",
+  "js/app.js", "js/badges.js", "js/calc.js", "js/calendar.js", "js/chart.js", "js/dates.js", "js/compare.js", "js/estimator.js", "js/favorites.js", "js/nutrients.js",
   "js/store.js", "js/ui.js", "js/views.js",
   "icons/icon-192.png", "icons/icon-512.png", "icons/maskable-512.png", "icons/apple-touch-icon.png",
 ];

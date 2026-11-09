@@ -126,7 +126,7 @@ export function dayColor(ev, { isToday = false } = {}) {
   if (ev.state === "pass") return "green";
   let worst = 0;
   for (const c of ev.checks) if (c.streak && c.status === "over" && c.max > 0) worst = Math.max(worst, c.value / c.max - 1);
-  if (worst > 0.10) return "red";
+  if (worst > 0.10 + 1e-9) return "red";       // tolerance: 2200/2000 - 1 is 0.10000000000000009 in floating point
   if (worst > 0) return "yellow";
   return "yellow";                                            // only "under the calorie minimum" is left
 }
@@ -136,4 +136,20 @@ export function scaleNutrition(base, factor) {
   const out = {};
   for (const k of NUTRIENT_KEYS) out[k] = Math.round((Number(base?.[k]) || 0) * factor * 10) / 10;
   return out;
+}
+
+/**
+ * Re-price a drink for a different sweetness. `addedGrams` is the sugar in this portion that can be reduced;
+ * factor 1 = regular, 0.5 = less sweet (siew dai), 0 = no added sugar (kosong). Sugars, carbs and calories drop together.
+ */
+export function applySweetness(n, addedGrams, factor) {
+  if (factor === 1 || !addedGrams) return n;
+  const cut = (1 - factor) * addedGrams;
+  const r1 = x => Math.round(x * 10) / 10;
+  return {
+    ...n,
+    sugars_g: r1(Math.max(0, (n.sugars_g || 0) - cut)),
+    carbohydrate_g: r1(Math.max(0, (n.carbohydrate_g || 0) - cut)),
+    energy_kcal: r1(Math.max(0, (n.energy_kcal || 0) - 4 * cut)),
+  };
 }

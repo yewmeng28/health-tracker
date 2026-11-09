@@ -32,6 +32,15 @@ test("today: renders five meals, calorie bar, nutrient meters", () => {
   assert.match(html, /585/);
   assert.match(html, /Laksa/);
   assert.match(html, /to go to reach your daily minimum/);
+  // calorie meter legend: each goal is named, valued and explained, and its tick/swatch is colour-coded
+  assert.match(html, /<b>Minimum<\/b> [\d,]+ kcal <small>eat at least this/);
+  assert.match(html, /<b>Your target<\/b> [\d,]+ kcal <small>your daily goal/);
+  assert.match(html, /<b>Ideal max<\/b> [\d,]+ kcal <small>try not to go above/);
+  assert.match(html, /class="mark min"[^>]*title="Minimum"/);
+  assert.match(html, /class="mark tgt"[^>]*title="Your target"/);
+  assert.match(html, /class="mark max"[^>]*title="Ideal maximum"/);
+  assert.match(html, /class="kzones"/);
+  assert.match(html, /healthy range/);
   assert.match(html, /Sodium/);
   assert.match(html, /data-action="del-entry" data-id="a"/);
   assert.ok(!html.includes("NaN") && !html.includes("undefined"), "no NaN/undefined");
@@ -46,6 +55,41 @@ test("today: pass, over-limit messages and estimate tag", () => {
   s.log[today][0].n.sodium_mg = 3000;
   html = todayView(s, today, today, evaluateBadges(s, today));
   assert.match(html, /Over your limit for sodium/);
+});
+
+test("today: lists EVERY limit exceeded, with amounts (not just streak limits)", () => {
+  const s = mk();
+  s.log[today] = [{ id: "m", meal: "lunch", name: "Feast", n: n(t.kcal.target, { sodium_mg: 3100, cholesterol_mg: 520, total_fat_g: t.fat.max + 30, sugars_g: t.sugars.max + 12 }) }];
+  const html = todayView(s, today, today, evaluateBadges(s, today));
+  const msg = html.match(/<p class="msg high">([^<]*)<\/p>/)[1];
+  for (const w of ["sodium", "cholesterol", "fat", "sugars"]) assert.ok(msg.includes(w), `${w} missing from: ${msg}`);
+  assert.match(msg, /^Over your limit for .* and sugars\.$|^Over your limit for .* and \w[\w ]*\.$/);   // joined as "a, b, c and d"
+  const list = html.match(/<ul class="overlist">([\s\S]*?)<\/ul>/)[1];
+  assert.match(list, /<b>Sodium<\/b>: 3,100 \/ 2,000 mg\s*<span class="high">\(\+1,100\)/);
+  assert.match(list, /<b>Cholesterol<\/b>: 520 \/ 300 mg\s*<span class="high">\(\+220\)/);
+  assert.match(list, /<b>Fat<\/b>: [\d,]+ \/ [\d,]+ g\s*<span class="high">\(\+30\)/);
+  assert.match(list, /<b>Sugars<\/b>: [\d,]+ \/ [\d,]+ g\s*<span class="high">\(\+12\)/);
+  assert.equal((list.match(/<li>/g) || []).length, 4);
+  assert.match(list, /guideline only/);                                   // fat/cholesterol don't break the streak
+  assert.equal((list.match(/guideline only/g) || []).length, 2);
+});
+
+test("today: a lone guideline-only overshoot does not fail the day but is still shown", () => {
+  const s = mk();
+  s.log[today] = [{ id: "m", meal: "lunch", name: "Eggs", n: n(t.kcal.min + 50, { cholesterol_mg: 450 }) }];
+  const html = todayView(s, today, today, evaluateBadges(s, today));
+  assert.match(html, /Within your limits — this day counts towards your streak\. Over a guideline for cholesterol\./);
+  assert.match(html, /<b>Cholesterol<\/b>: 450 \/ 300 mg/);
+});
+
+test("today: hidden non-streak nutrients are not listed, streak limits always are", () => {
+  const s = mk();
+  s.prefs = { nutrientMode: "custom", nutrients: ["protein"] };            // cholesterol, fat, sodium... hidden
+  s.log[today] = [{ id: "m", meal: "lunch", name: "Feast", n: n(t.kcal.target, { sodium_mg: 3100, cholesterol_mg: 520 }) }];
+  const html = todayView(s, today, today, evaluateBadges(s, today));
+  const list = html.match(/<ul class="overlist">([\s\S]*?)<\/ul>/)[1];
+  assert.match(list, /<b>Sodium<\/b>/);                                    // streak limit: always shown
+  assert.doesNotMatch(list, /Cholesterol/);                                // hidden and not a streak limit
 });
 
 test("today: past day without enough food is flagged; next button disabled today", () => {

@@ -19,7 +19,7 @@ class El {
   close() { this.open = false; (this.listeners.close || []).forEach(f => f()); }
 }
 const els = {};
-const viewIds = ["today", "foods", "weight", "badges", "profile"].map(t => "#view-" + t);
+const viewIds = ["today", "foods", "compare", "weight", "badges", "profile"].map(t => "#view-" + t);
 const get = sel => (els[sel] ||= new El(sel));
 get("#sort").value = "name";             // a real <select> starts on its first option
 const docListeners = {};
@@ -189,6 +189,199 @@ test("describe it: matched part + vague part -> asks for an estimate, blocks add
   assert.ok(entries.some(e => e.estimated && e.n.energy_kcal === 300));
   assert.equal(st.customFoods[0].name, "Beer and a snack");
   assert.ok(Math.abs(st.customFoods[0].nutrition_per_serving.energy_kcal - (300 + 134.7 * 500 / 330)) < 2);
+});
+
+// ---------------- feedback round: simple cards, clear button, Done, weight card, prefs, sweetness, comparison ----------------
+const DB = JSON.parse(dbText).foods;
+const idOf = name => DB.find(f => f.name === name).id;
+const stateNow = () => JSON.parse(store["health-tracker:v1"]);
+const localDate = () => { const d = new Date(); const p = n => String(n).padStart(2, "0"); return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}`; };
+const typeQ = v => { els["#q"].value = v; docListeners.input.forEach(f => f({ target: { id: "q", closest: () => null, dataset: {} } })); };
+
+test("food cards are simple; 'More info' reveals details; search has a working clear button", () => {
+  go("#foods");
+  typeQ("laksa");
+  assert.equal(els["#clearQ"].hidden, false);                         // clear button appears once there is text
+  assert.match(html("#results"), /More info/);
+  assert.doesNotMatch(html("#results"), /class="nutrients"/);         // nothing but name, serving, kcal and buttons
+  assert.doesNotMatch(html("#results"), /class="tags"/);
+  click("toggle-info", { id: idOf("Laksa") });
+  const opened = document.querySelector(`article[data-id="${idOf("Laksa")}"]`).outerHTML;
+  assert.match(opened, /class="nutrients"/);
+  assert.match(opened, /Less info/);
+  click("toggle-info", { id: idOf("Laksa") });                        // collapse again so later tests start closed
+  click("clear-search");
+  assert.equal(els["#q"].value, "");
+  assert.equal(els["#clearQ"].hidden, true);
+  assert.equal(els["#browse"].hidden, false);                         // back to the calm landing page
+});
+
+test("Done after 'Adding to <meal>' returns to that meal's day on the Today tab", () => {
+  go("#today");
+  click("day-prev");                                                   // look at yesterday
+  click("add-search", { meal: "tea" });
+  assert.equal(location.hash, "#foods");
+  assert.match(html("#addbanner"), /Adding to/);
+  click("cancel-add");
+  assert.equal(location.hash, "#today");
+  assert.match(html("#view-today"), /id="meal-tea"/);
+  assert.match(html("#view-today"), /Yesterday/);                      // the day we were adding to
+  assert.equal(els["#addbanner"].hidden, false);                       // (banner re-evaluated on the next Foods render)
+  go("#foods"); assert.equal(els["#addbanner"].hidden, true);
+  go("#today"); click("day-today");
+});
+
+test("Today shows a weigh-in reminder with the last weight, then today's weight once logged", () => {
+  // saving the profile earlier logged a weigh-in today; remove it so we are back to "not weighed yet today"
+  assert.match(html("#view-today"), /Weighed today:/);
+  for (const w of stateNow().weights.filter(x => x.date === localDate())) click("del-weight", { date: w.date, time: w.time || "" });
+  const v = html("#view-today");
+  assert.match(v, /Time to weigh yourself/);
+  assert.match(v, /Last: 81\.5 kg/);
+  assert.match(v, /id="quickWeight"/);
+  submit({ id: "quickWeight", kg: { value: "80.8" }, preventDefault() {} });
+  const after = html("#view-today");
+  assert.match(after, /Weighed today:/);
+  assert.match(after, /80\.8 kg/);
+  assert.doesNotMatch(after, /Time to weigh yourself/);
+  const w = stateNow().weights.at(-1);
+  assert.equal(w.kg, 80.8); assert.ok(/^\d\d:\d\d$/.test(w.time));
+});
+
+test("Profile: choose which nutrients to show; Today and food details follow", () => {
+  go("#profile");
+  assert.match(html("#view-profile"), /Show all nutrients/);
+  const change = t => docListeners.change.forEach(f => f({ target: { classList: { contains: () => false }, closest: () => null, ...t } }));
+  change({ dataset: { pref: "mode" }, value: "custom" });
+  let st = stateNow().prefs;
+  assert.equal(st.nutrientMode, "custom");
+  assert.ok(st.nutrients.length >= 9);                                 // starts with everything ticked
+  change({ dataset: { pref: "nutrient" }, value: "cholesterol", checked: false });
+  change({ dataset: { pref: "nutrient" }, value: "transFat", checked: false });
+  assert.ok(!stateNow().prefs.nutrients.includes("cholesterol"));
+  assert.match(html("#view-profile"), /name="nutrientMode"[^>]*value="custom" checked/);
+  go("#today");
+  assert.doesNotMatch(html("#view-today"), /<span>Cholesterol<\/span>/);
+  assert.match(html("#view-today"), /<span>Sodium<\/span>/);
+  assert.match(html("#view-today"), /Some nutrients are hidden/);
+  go("#foods"); typeQ("laksa");
+  click("toggle-info", { id: idOf("Laksa") });
+  const card = document.querySelector(`article[data-id="${idOf("Laksa")}"]`).outerHTML;
+  assert.doesNotMatch(card, /<span>Cholesterol<\/span>/);
+  assert.match(card, /<span>Protein<\/span>/);
+  change({ dataset: { pref: "mode" }, value: "all" });
+  go("#today");
+  assert.match(html("#view-today"), /<span>Cholesterol<\/span>/);
+  typeQ(""); go("#today");
+});
+
+test("drinks: less sweet / no sugar lowers sugar and calories, and can be changed after logging", () => {
+  const kopi = idOf("Kopi (with condensed milk)");
+  const date = localDate();
+  const logForm = sweet => ({ id: "logForm", dataset: { food: kopi }, amount: { value: "250", selectedOptions: [{ textContent: "serving (250 g)" }] },
+    count: { value: "1" }, meal: { value: "breakfast" }, date: { value: date },
+    sweet: { value: sweet, selectedOptions: [{ textContent: "x" }] } });
+  els["#logForm"] = logForm("1");
+  click("log-food", { id: kopi });
+  assert.match(html("#sheet"), /name="sweet"/);                        // sweetness choice appears for this drink
+  assert.match(html("#sheet"), /siew dai/);
+  submit(logForm("1"));
+  submit(logForm("0.5"));
+  const entries = Object.values(stateNow().log).flat().filter(e => e.foodId === kopi);
+  const reg = entries.find(e => e.sweetFactor === 1), less = entries.find(e => e.sweetFactor === 0.5);
+  assert.ok(reg && less);
+  assert.ok(Math.abs((reg.n.energy_kcal - less.n.energy_kcal) - 24) < 0.6, `${reg.n.energy_kcal} vs ${less.n.energy_kcal}`);
+  assert.ok(less.n.sugars_g < reg.n.sugars_g);
+  assert.match(less.amountLabel, /less sweet/);
+  // edit it to "no added sugar"
+  const form = { id: "editForm", elements: { mult: { value: "1" }, meal: { value: "breakfast" }, sweet: { value: "0" } }, preventDefault() {} };
+  els["#editForm"] = form;
+  go("#today");
+  click("edit-entry", { id: less.id });
+  assert.match(html("#sheet"), /name="sweet"/);
+  submit(form);
+  const edited = Object.values(stateNow().log).flat().find(e => e.id === less.id);
+  assert.equal(edited.sweetFactor, 0);
+  assert.ok(edited.n.sugars_g < less.n.sugars_g);
+});
+
+test("Compare meals: build two options, see the verdict, go with the better one", () => {
+  go("#compare");
+  assert.match(html("#view-compare"), /Option A/);
+  assert.match(html("#view-compare"), /Option B/);
+  assert.match(html("#view-compare"), /at least two options/);
+  assert.match(location.hash, /compare/);
+  const [a, b] = stateNow().compare.options;
+  const date = localDate();
+  const addVia = (optId, name, sweet) => {
+    click("cmp-add", { opt: optId });
+    assert.match(html("#sheet"), /id="pickQ"/);
+    document.querySelector("#pickQ").value = name.toLowerCase();
+    docListeners.input.forEach(f => f({ target: { id: "pickQ", closest: () => null, dataset: {} } }));
+    assert.match(html("#pickList"), new RegExp(name.split(" ")[0]));
+    const id = idOf(name);
+    els["#logForm"] = { id: "logForm", dataset: { food: id, compare: optId }, amount: { value: String(DB.find(f => f.id === id).serving.amount), selectedOptions: [{ textContent: "serving" }] },
+      count: { value: "1" }, ...(sweet ? { sweet: { value: sweet, selectedOptions: [{ textContent: "x" }] } } : {}) };
+    click("pick-food", { id });
+    assert.match(html("#sheet"), /id="logForm"/);
+    assert.doesNotMatch(html("#sheet"), /name="meal"/);                // no mealtime/date when building an option
+    submit(els["#logForm"]);
+  };
+  addVia(a.id, "Mala dry (mala xiang guo)");                           // very salty
+  addVia(b.id, "Hainanese chicken rice, steamed");
+  addVia(b.id, "Teh O (tea with sugar)", "0");
+  const cmp = stateNow().compare;
+  assert.equal(cmp.options[0].items.length, 1);
+  assert.equal(cmp.options[1].items.length, 2);
+  assert.ok(cmp.options[1].items.every(i => i.id));
+  const v = html("#view-compare");
+  assert.match(v, /Best fit: Option B/);                               // mala dry carries ~2400 mg sodium
+  assert.match(v, /Fits your day\?/);
+  assert.match(v, /less sodium/);
+  assert.match(v, /data-action="cmp-choose"/);
+  // rename an option, then go with the winner
+  docListeners.change.forEach(f => f({ target: { dataset: { cmpName: b.id }, value: "Chicken rice + tea", classList: { contains: () => false }, closest: () => null } }));
+  assert.match(html("#view-compare"), /Chicken rice \+ tea/);
+  const before = Object.values(stateNow().log).flat().length;
+  click("cmp-choose", { opt: b.id });
+  assert.match(html("#sheet"), /Go with Chicken rice \+ tea/);
+  submit({ id: "cmpLogForm", dataset: { opt: b.id }, meal: { value: "dinner" }, date: { value: date }, preventDefault() {} });
+  const logged = Object.values(stateNow().log).flat();
+  assert.equal(logged.length, before + 2);
+  assert.ok(logged.filter(e => e.meal === "dinner").some(e => /chicken rice/i.test(e.name)));
+  assert.equal(location.hash, "#today");
+});
+
+test("Compare meals: remove/add options, include-today toggle, copy from log", () => {
+  go("#compare");
+  click("cmp-new");
+  assert.equal(stateNow().compare.options.length, 3);
+  assert.match(html("#view-compare"), /Option B/);                    // the free name is reused ("Option B" was renamed earlier)
+  const c = stateNow().compare.options[2];
+  click("cmp-remove", { opt: c.id });
+  assert.equal(stateNow().compare.options.length, 2);
+  docListeners.change.forEach(f => f({ target: { dataset: { cmp: "include-today" }, checked: false, classList: { contains: () => false }, closest: () => null } }));
+  assert.equal(stateNow().compare.includeToday, false);
+  // copy a logged meal into option A
+  const a = stateNow().compare.options[0];
+  click("cmp-copy", { opt: a.id });
+  assert.match(html("#sheet"), /id="cmpCopyForm"/);
+  const date = localDate();
+  const before = stateNow().compare.options[0].items.length;
+  submit({ id: "cmpCopyForm", dataset: { opt: a.id }, date: { value: date }, meal: { value: "dinner" }, preventDefault() {} });
+  assert.ok(stateNow().compare.options[0].items.length > before);
+  click("cmp-reset");
+  assert.equal(stateNow().compare.options.length, 2);
+  assert.ok(stateNow().compare.options.every(o => o.items.length === 0));
+});
+
+test("no pinch-zoom: viewport locks scale and iOS gesturestart is blocked", () => {
+  const indexHtml = readFileSync(new URL("../index.html", import.meta.url), "utf8");
+  assert.match(indexHtml, /maximum-scale=1/);
+  assert.match(indexHtml, /user-scalable=no/);
+  let prevented = false;
+  (docListeners.gesturestart || []).forEach(f => f({ preventDefault() { prevented = true; } }));
+  assert.equal(prevented, true);
 });
 
 test("no unhandled errors during the whole walk-through", () => {

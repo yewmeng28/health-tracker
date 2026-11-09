@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
 <title>Health Tracker</title>
 <meta name="description" content="Track food, weight and daily limits. Works offline.">
 <meta name="theme-color" content="#2f7d5b">
@@ -28,8 +28,12 @@
     <div id="addbanner" class="banner" hidden></div>
     <div class="row spread">
       <button class="btn primary" data-action="describe-open">✎ Describe a food</button>
+      <a class="btn" href="#compare">⚖ Compare meals</a>
     </div>
-    <input id="q" type="search" class="bigsearch" placeholder="Search foods and drinks…" autocomplete="off" aria-label="Search foods and drinks">
+    <div class="searchwrap">
+      <input id="q" type="search" class="bigsearch" placeholder="Search foods and drinks…" autocomplete="off" aria-label="Search foods and drinks">
+      <button id="clearQ" type="button" class="clearbtn" data-action="clear-search" aria-label="Clear search" hidden>✕</button>
+    </div>
     <details id="filters" class="filters">
       <summary id="filtersSummary">Filters &amp; sorting</summary>
       <div class="controls">
@@ -70,6 +74,7 @@
     <footer id="note" class="fine"></footer>
   </section>
 
+  <section id="view-compare" class="view" hidden></section>
   <section id="view-weight" class="view" hidden></section>
   <section id="view-badges" class="view" hidden></section>
   <section id="view-profile" class="view" hidden></section>

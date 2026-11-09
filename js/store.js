@@ -9,6 +9,8 @@ export const defaultState = () => ({
   customFoods: [],          // saved custom foods (same shape as database foods)
   badges: {},               // {badgeId: dateEarned}
   favorites: [],            // food ids, newest first
+  prefs: { nutrientMode: "all", nutrients: [] },   // which nutrients to display (Profile -> Display)
+  compare: { options: [], includeToday: true },    // meal comparison options
 });
 
 let state = defaultState();

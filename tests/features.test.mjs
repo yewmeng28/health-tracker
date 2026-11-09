@@ -30,6 +30,7 @@ test("dayColor: green, yellow (close), red (over), under-minimum, empty", () => 
   assert.equal(dayColor(ev(n(t.kcal.target))), "green");
   assert.equal(dayColor(ev(n(t.kcal.target, { sodium_mg: 2100 }))), "yellow");            // 5% over
   assert.equal(dayColor(ev(n(t.kcal.target, { sodium_mg: 2600 }))), "red");               // 30% over
+  assert.equal(dayColor(ev(n(t.kcal.target, { sodium_mg: 2200 }))), "yellow");            // exactly 10% over is still yellow (float boundary)
   assert.equal(dayColor(ev(n(t.kcal.max + 200))), "yellow");                              // ~7% over the calorie max
   assert.equal(dayColor(ev(n(t.kcal.max * 1.3))), "red");
   assert.equal(dayColor(ev(n(t.kcal.min * 0.85))), "yellow");                             // under the minimum: warning
@@ -73,6 +74,14 @@ test("calendar view: legend, cells, selected-day detail with 'Show full breakdow
   assert.match(html, /disabled>\s*<span>11/);                          // future day disabled
   assert.ok(!html.includes("NaN") && !html.includes("undefined"));
   assert.match(calendarView(s, today, { calMonth: "2026-11", calSelected: null }, "food"), /Tap a day for details/);
+});
+
+test("calendar day detail also lists non-streak limits that were exceeded", () => {
+  const s = base();
+  day(s, "2026-11-07", n(t.kcal.target, { cholesterol_mg: 650, total_fat_g: t.fat.max + 40 }));
+  const html = dayDetail(s, "2026-11-07", today, "food");
+  assert.match(html, /Cholesterol: 650 mg — over/);
+  assert.match(html, /Fat: [\d,]+ g — over/);
 });
 
 test("day detail lists what went wrong", () => {

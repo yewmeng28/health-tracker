@@ -1,21 +1,23 @@
 import { BADGES, evaluateBadges } from "./badges.js";
-import { scaleNutrition } from "./calc.js";
+import { applySweetness, scaleNutrition } from "./calc.js";
+import { MAX_OPTIONS, cloneItem, newOption } from "./compare.js";
+import { NUTRIENTS, shownKeys } from "./nutrients.js";
 import { favoriteFoods, isFavorite, recentFoods, topCategories } from "./favorites.js";
 import { shiftMonth } from "./calendar.js";
 import { MEALS, addDays, mealByTime, monthOf, prettyDate, timeStr, todayStr } from "./dates.js";
 import {
   PRESETS, SIZE_PRESETS, buildIndex, chooseFood, estimateManual, nutritionOfFood, parseDescription,
-  setMultiplier, sumNutritionObjects,
+  setMultiplier, setSweetness, sumNutritionObjects,
 } from "./estimator.js";
 import {
   addLogEntry, deleteWeight, exportJson, getState, importJson, load, removeLogEntry, resetAll,
   setWeight, subscribe, toggleFavorite, uid, update, updateLogEntry,
 } from "./store.js";
 import { $, $$, esc, fmt, toast } from "./ui.js";
-import { badgesView, profileView, todayView, weightView } from "./views.js";
+import { badgesView, compareView, profileView, todayView, weightView } from "./views.js";
 
 // ------------------------------------------------------------------ state
-const TITLES = { today: "Today", foods: "Foods & drinks", weight: "Weight", badges: "Streaks & badges", profile: "Profile" };
+const TITLES = { today: "Today", foods: "Foods & drinks", compare: "Compare meals", weight: "Weight", badges: "Streaks & badges", profile: "Profile" };
 let foodsDb = [], dbError = false;
 let tab = "today", viewDate = todayStr(), range = "90", addCtx = null;
 let shown = 30;
@@ -25,6 +27,8 @@ let favCtx = null;          // {date, meal} while the favourites picker is open
 const servingChoice = {};   // food id -> chosen serving amount (ml) for drinks
 let cs = null;              // custom-food sheet state
 let editCtx = null;         // {date, id} of the logged entry being edited
+let pickTarget = null;      // comparison option id while the "add a food" picker is open
+const expanded = new Set(); // food ids whose "more info" is open
 const ui = { todayMode: "day", weightMode: "chart", calMonth: monthOf(todayStr()), calSelected: null };
 let idx = null, idxKey = "";
 let awarding = false;
@@ -46,13 +50,14 @@ function render() {
   $("#streakchip").textContent = `🔥 ${info.stats.streak}`;
   $("#streakchip").title = `${info.stats.streak}-day streak`;
   $$(".view").forEach(v => { v.hidden = v.id !== "view-" + tab; });
-  $$(".tabbar a").forEach(a => { a.classList.toggle("on", a.dataset.tab === tab); a.dataset.tab === tab ? a.setAttribute("aria-current", "page") : a.removeAttribute("aria-current"); });
+  $$(".tabbar a").forEach(a => { const on = a.dataset.tab === (tab === "compare" ? "foods" : tab); a.classList.toggle("on", on); on ? a.setAttribute("aria-current", "page") : a.removeAttribute("aria-current"); });
 
   if (tab === "today") $("#view-today").innerHTML = todayView(s, viewDate, today, info, ui);
   else if (tab === "weight") $("#view-weight").innerHTML = weightView(s, today, range, ui);
   else if (tab === "badges") $("#view-badges").innerHTML = badgesView(info);
   else if (tab === "profile") $("#view-profile").innerHTML = profileView(s, today);
   else if (tab === "foods") renderFoods();
+  else if (tab === "compare") $("#view-compare").innerHTML = compareView(s, today);
 }
 
 function awardBadges(ids) {
@@ -65,6 +70,9 @@ function awardBadges(ids) {
 function route() {
   const t = location.hash.replace("#", "");
   tab = TITLES[t] ? t : "today";
+  if (tab === "compare" && getState().compare.options.length < 2) {           // start with two empty options
+    update(s => { while (s.compare.options.length < 2) s.compare.options.push(newOption(s.compare.options)); });
+  }
   render();
   window.scrollTo(0, 0);
 }
@@ -89,10 +97,25 @@ function nutritionFor(f) {
   return out;
 }
 
+/** Simple card: name, serving, calories and the main actions. "More info" reveals everything else. */
 function foodCard(f) {
-  const n = nutritionFor(f), fl = f.flags, isDrink = f.category === "alcohol";
+  const n = nutritionFor(f);
   const amt = servingChoice[f.id] ?? f.serving.amount;
-  const item = (label, val, unit) => `<div><span>${label}</span>${fmt(val, unit === "mg" ? 0 : 1)} ${unit}</div>`;
+  const open = expanded.has(f.id);
+  const optLabel = f.serving_options?.find(o => o.amount === amt)?.label;
+  const serving = optLabel ? esc(optLabel) : `${amt} ${esc(f.serving.unit)}${f.serving.unit === "serving" ? "" : " serving"}`;
+  return `<article class="card food simple" data-id="${esc(f.id)}">
+    <div class="head"><div><div class="name">${esc(f.name)}</div>
+      <div class="sub">${esc(f.cuisine)} · ${esc(f.category.replace(/_/g, " "))} · ${serving}</div></div>
+      <div class="kcal">${fmt(n.energy_kcal)} kcal</div></div>
+    <div class="cardbtns"><button class="btn primary small" data-action="log-food" data-id="${esc(f.id)}">＋ Log</button>
+      ${starButton(f.id, true)}
+      <button class="btn small" data-action="toggle-info" data-id="${esc(f.id)}" aria-expanded="${open}">${open ? "Less info ▴" : "More info ▾"}</button></div>
+    ${open ? foodDetails(f, n, amt) : ""}</article>`;
+}
+
+function foodDetails(f, n, amt) {
+  const fl = f.flags, isDrink = f.category === "alcohol", shown = shownKeys(getState());
   const std = (n.alcohol_g || 0) / 10;
   const tags = isDrink
     ? [`<span class="tag ${std >= 2 ? "high" : std >= 1 ? "medium" : "low"}" title="1 standard drink = 10 g alcohol">${std.toFixed(1)} standard drinks</span>`,
@@ -105,24 +128,19 @@ function foodCard(f) {
     : dq.status === "custom" ? '<span class="tag src">custom</span>'
     : safeUrl ? `<a class="tag src" href="${esc(safeUrl)}" target="_blank" rel="noopener noreferrer" title="${esc(dq.source || "")}">sourced (${esc(dq.confidence)}) ↗</a>`
     : `<span class="tag src">sourced (${esc(dq.confidence)})</span>`);
-  const srcLine = dq.status === "estimated" || dq.status === "custom" ? "" :
-    `<div class="srcline">Source: ${safeUrl ? `<a href="${esc(safeUrl)}" target="_blank" rel="noopener noreferrer">${esc(dq.source || safeUrl)}</a>` : esc(dq.source || "n/a")}${dq.source_serving_note ? ` — ${esc(dq.source_serving_note)}` : ""}</div>`;
   if (fl.high_cholesterol) tags.push('<span class="tag high">high cholesterol</span>');
   if (fl.high_sat_fat) tags.push('<span class="tag high">high sat fat</span>');
-  const servingHtml = f.serving_options?.length > 1
-    ? `<select class="serving-select" aria-label="Serving size">${f.serving_options.map(o => `<option value="${o.amount}"${o.amount === amt ? " selected" : ""}>${esc(o.label)}</option>`).join("")}</select>`
-    : `${amt} ${esc(f.serving.unit)}${f.serving.unit === "serving" ? "" : " serving"}`;
-  return `<article class="card food" data-id="${esc(f.id)}">
-    <div class="head"><div><div class="name">${esc(f.name)}</div>
-      <div class="sub">${esc(f.cuisine)} · ${esc(f.category.replace(/_/g, " "))} · ${servingHtml}</div></div>
-      <div class="kcal">${fmt(n.energy_kcal)} kcal</div></div>
-    <div class="nutrients">${isDrink ? item("Alcohol", n.alcohol_g, "g") : ""}${item("Protein", n.protein_g, "g")}${item("Carbs", n.carbohydrate_g, "g")}${item("Fat", n.total_fat_g, "g")}
-      ${item("Sat fat", n.saturated_fat_g, "g")}${item("Trans fat", n.trans_fat_g, "g")}${item("Fibre", n.fibre_g, "g")}
-      ${item("Sugars", n.sugars_g, "g")}${item("Sodium", n.sodium_mg, "mg")}${item("Cholesterol", n.cholesterol_mg, "mg")}</div>
+  const srcLine = dq.status === "estimated" || dq.status === "custom" ? "" :
+    `<div class="srcline">Source: ${safeUrl ? `<a href="${esc(safeUrl)}" target="_blank" rel="noopener noreferrer">${esc(dq.source || safeUrl)}</a>` : esc(dq.source || "n/a")}${dq.source_serving_note ? ` — ${esc(dq.source_serving_note)}` : ""}</div>`;
+  const grid = NUTRIENTS.filter(x => shown.has(x.key) && (x.key !== "alcohol" || isDrink))
+    .map(x => `<div><span>${esc(x.short)}</span>${fmt(n[x.field], x.unit === "mg" ? 0 : 1)} ${x.unit}</div>`).join("");
+  const select = f.serving_options?.length > 1
+    ? `<label class="inline">Serving <select class="serving-select" aria-label="Serving size">${f.serving_options.map(o => `<option value="${o.amount}"${o.amount === amt ? " selected" : ""}>${esc(o.label)}</option>`).join("")}</select></label>` : "";
+  return `<div class="details">${select}
+    <div class="nutrients">${grid}</div>
     <div class="tags">${tags.join("")}</div>${srcLine}
-    <div class="cardbtns"><button class="btn primary small" data-action="log-food" data-id="${esc(f.id)}">＋ Log</button>
-      ${starButton(f.id, true)}
-      ${dq.status === "custom" ? `<button class="btn small danger" data-action="del-custom" data-id="${esc(f.id)}">Delete</button>` : ""}</div></article>`;
+    ${f.sweetness ? '<p class="fine">🍬 Choose regular, less sweet or no added sugar when you log it.</p>' : ""}
+    ${dq.status === "custom" ? `<button class="btn small danger" data-action="del-custom" data-id="${esc(f.id)}">Delete this custom food</button>` : ""}</div>`;
 }
 
 function refreshFilterOptions() {
@@ -201,6 +219,7 @@ function renderFoods() {
     return;
   }
   refreshFilterOptions();
+  $("#clearQ").hidden = !$("#q").value;
   const terms = $("#q").value.toLowerCase().split(/\s+/).filter(Boolean);
   const active = activeFilters();
   $("#filtersSummary").textContent = "Filters & sorting" + (active.length ? ` (${active.length} active)` : "");
@@ -235,18 +254,21 @@ function openSheet(html) { sheet().innerHTML = `<div class="sheetbody">${html}</
 function closeSheet() { if (sheet().open) sheet().close(); cs = null; editCtx = null; }
 const mealOptions = sel => MEALS.map(m => `<option value="${m.id}"${m.id === sel ? " selected" : ""}>${m.icon} ${m.label}</option>`).join("");
 
-function openLogSheet(food, ctx = addCtx || { date: viewDate, meal: mealByTime() }) {
+function openLogSheet(food, ctx = addCtx || { date: viewDate, meal: mealByTime() }, target = null) {
+  const compareId = target?.compare || null;
+  const optName = compareId ? getState().compare.options.find(o => o.id === compareId)?.name : "";
   const opts = food.serving_options?.length ? food.serving_options
     : [{ label: food.serving.unit === "serving" ? "serving" : `serving (${food.serving.amount} ${food.serving.unit})`, amount: food.serving.amount }];
   const def = servingChoice[food.id] ?? opts[0].amount;
   openSheet(`<h2>${esc(food.name)}</h2>
-    <form id="logForm" data-food="${esc(food.id)}" class="form">
+    <form id="logForm" data-food="${esc(food.id)}" ${compareId ? `data-compare="${esc(compareId)}"` : ""} class="form">
       <label>Serving<select name="amount">${opts.map(o => `<option value="${o.amount}"${o.amount === def ? " selected" : ""}>${esc(o.label)}</option>`).join("")}</select></label>
       <label>How many?<input type="number" name="count" min="0.25" step="0.25" value="1" inputmode="decimal" required></label>
-      <label>Mealtime<select name="meal">${mealOptions(ctx.meal)}</select></label>
-      <label>Date<input type="date" name="date" value="${ctx.date}" max="${todayStr()}" required></label>
+      ${food.sweetness ? `<label>Sweetness<select name="sweet">${food.sweetness.options.map(o => `<option value="${o.factor}"${o.factor === 1 ? " selected" : ""}>${esc(o.label)}</option>`).join("")}</select></label>` : ""}
+      ${compareId ? "" : `<label>Mealtime<select name="meal">${mealOptions(ctx.meal)}</select></label>
+      <label>Date<input type="date" name="date" value="${ctx.date}" max="${todayStr()}" required></label>`}
       <p class="preview" id="logPreview"></p>
-      <div class="row"><button class="btn" type="button" data-action="close-sheet">Cancel</button><button class="btn primary" type="submit">Add to log</button></div></form>`);
+      <div class="row"><button class="btn" type="button" data-action="close-sheet">Cancel</button><button class="btn primary" type="submit">${compareId ? `Add to ${esc(optName || "option")}` : "Add to log"}</button></div></form>`);
   updateLogPreview();
 }
 
@@ -255,16 +277,20 @@ function logSelection(form) {
   const amount = Number(form.amount.value), count = Number(form.count.value) || 1;
   const mult = (amount * count) / food.serving.amount;
   const label = form.amount.selectedOptions[0].textContent.replace(/^1 (?=\D)/, "");   // "1 egg (50 g)" -> "egg (50 g)"
-  return { food, mult, count, label, amount, n: nutritionOfFood(food, mult) };
+  const factor = form.sweet ? Number(form.sweet.value) : 1;
+  return { food, mult, count, label, amount, factor, n: nutritionOfFood(food, mult, factor) };
 }
 
+const sweetShort = f => (f === 0 ? "no sugar" : f === 0.5 ? "less sweet" : "");
+
 /** Everything needed to re-scale a logged food later (edit portion) is stored on the entry. */
-function foodEntryFields(food, { mult, count, label, amount }) {
+function foodEntryFields(food, { mult, count, label, amount, factor = 1 }) {
   return {
+    ...(food.sweetness ? { sweetAdded: food.sweetness.added_sugar_g, sweetFactor: factor, sweetOptions: food.sweetness.options } : {}),
     foodId: food.id, base: nutritionOfFood(food, 1), mult, count, optionAmount: amount,
     serving: { amount: food.serving.amount, unit: food.serving.unit },
     options: food.serving_options?.length > 1 ? food.serving_options : null,
-    amountLabel: `${count} × ${label}`,
+    amountLabel: `${count} × ${label}${sweetShort(factor) ? " · " + sweetShort(factor) : ""}`,
   };
 }
 
@@ -277,7 +303,7 @@ function updateLogPreview() {
 
 // ---- custom "describe it" sheet
 function openCustomSheet(ctx = {}) {
-  cs = { ctx: { date: ctx.date || viewDate, meal: ctx.meal || mealByTime() }, items: null, vague: false };
+  cs = { ctx: { date: ctx.date || viewDate, meal: ctx.meal || mealByTime() }, compare: ctx.compare || null, items: null, vague: false };
   openSheet(`<h2>Describe what you ate</h2>
     <p class="muted">e.g. <i>“2 slices kaya toast and a soft boiled egg”</i>, <i>“a pint of Tiger and a bowl of laksa”</i>. I'll match it against the database.
     If something is too vague or not in the database, I'll ask you for a rough estimate.</p>
@@ -320,6 +346,7 @@ function csItemHtml(it, i) {
     <label>Matched food<select data-ci="${i}" data-f="food">${cands.map(f => `<option value="${esc(f.id)}"${f.id === it.food.id ? " selected" : ""}>${esc(f.name)}</option>`).join("")}
       <option value="__manual">None of these — I'll estimate</option></select></label>
     <label>Amount (× serving)<input type="number" min="0.1" step="0.25" inputmode="decimal" data-ci="${i}" data-f="mult" value="${+it.mult.toFixed(2)}"></label>
+    ${it.food.sweetness ? `<label>Sweetness<select data-ci="${i}" data-f="sweet">${it.food.sweetness.options.map(o => `<option value="${o.factor}"${o.factor === (it.sweetFactor ?? 1) ? " selected" : ""}>${esc(o.label)}</option>`).join("")}</select></label>` : ""}
     <div class="fine">${esc(it.label)} → <b>${fmt(n.energy_kcal)} kcal</b>, ${fmt(n.protein_g, 1)} g protein, ${fmt(n.sodium_mg)} mg sodium${n.alcohol_g ? `, ${(n.alcohol_g / 10).toFixed(1)} std drinks` : ""}</div></div>`;
 }
 
@@ -330,11 +357,11 @@ function renderCsResults() {
   out.innerHTML = `${cs.items.map(csItemHtml).join("")}
     <div class="ci total"><div class="cit">Total</div><div id="csTotal" class="preview"></div></div>
     <form id="csForm" class="form">
-      <label>Mealtime<select name="meal">${mealOptions(cs.ctx.meal)}</select></label>
-      <label>Date<input type="date" name="date" value="${cs.ctx.date}" max="${todayStr()}" required></label>
+      ${cs.compare ? "" : `<label>Mealtime<select name="meal">${mealOptions(cs.ctx.meal)}</select></label>
+      <label>Date<input type="date" name="date" value="${cs.ctx.date}" max="${todayStr()}" required></label>`}
       <label class="check"><input type="checkbox" name="save" id="csSave"> Save as a custom food for next time</label>
       <label id="csNameWrap" hidden>Name<input type="text" name="name" maxlength="60" value="${esc($("#csText").value.trim().slice(0, 60))}"></label>
-      <div class="row"><button class="btn primary" type="submit" id="csAdd">Add to log</button></div></form>`;
+      <div class="row"><button class="btn primary" type="submit" id="csAdd">${cs.compare ? "Add to comparison" : "Add to log"}</button></div></form>`;
   cs.items.forEach((it, i) => { if (it.confidence === "unknown") updateEst(i); });
   updateCsTotals();
 }
@@ -364,21 +391,33 @@ function csCalculate() {
   renderCsResults();
 }
 
+/** Entry fields for one parsed item (used for both the log and meal-comparison options). */
+function csEntryFields(it) {
+  const n = itemN(it);
+  const known = it.food && it.confidence !== "unknown";
+  const short = known && it.food.sweetness ? sweetShort(it.sweetFactor ?? 1) : "";
+  return {
+    source: known ? "database" : "estimate",
+    name: known ? it.food.name : it.text,
+    amountLabel: known ? it.label + (short ? " · " + short : "") : "your estimate",
+    estimated: !known, foodId: known ? it.food.id : undefined, n,
+    base: known ? nutritionOfFood(it.food, 1) : n, mult: known ? it.mult : 1, count: known ? +it.mult.toFixed(2) : 1,
+    optionAmount: known ? it.food.serving.amount : 1,
+    serving: known ? { amount: it.food.serving.amount, unit: it.food.serving.unit } : { amount: 1, unit: "serving" }, options: null,
+    ...(known && it.food.sweetness ? { sweetAdded: it.food.sweetness.added_sugar_g, sweetFactor: it.sweetFactor ?? 1, sweetOptions: it.food.sweetness.options } : {}),
+  };
+}
+
+function addCompareItem(optId, item) {
+  update(s => { const o = s.compare.options.find(x => x.id === optId); if (o) o.items.push({ ...item, id: uid() }); });
+}
+
 function csSubmit(form) {
-  const meal = form.meal.value, date = form.date.value;
-  const items = cs.items;
+  const items = cs.items, compareId = cs.compare;
+  const meal = compareId ? null : form.meal.value, date = compareId ? null : form.date.value;
   for (const it of items) {
-    const n = itemN(it);
-    const known = it.food && it.confidence !== "unknown";
-    addLogEntry(date, {
-      meal, source: known ? "database" : "estimate",
-      name: known ? it.food.name : it.text,
-      amountLabel: known ? it.label : "your estimate",
-      estimated: !known, foodId: known ? it.food.id : undefined, n,
-      base: known ? nutritionOfFood(it.food, 1) : n, mult: known ? it.mult : 1, count: known ? +it.mult.toFixed(2) : 1,
-      optionAmount: known ? it.food.serving.amount : 1,
-      serving: known ? { amount: it.food.serving.amount, unit: it.food.serving.unit } : { amount: 1, unit: "serving" }, options: null,
-    });
+    if (compareId) addCompareItem(compareId, csEntryFields(it));
+    else addLogEntry(date, { meal, ...csEntryFields(it) });
   }
   if (form.save.checked) {
     const total = sumNutritionObjects(items.map(itemN));
@@ -391,6 +430,7 @@ function csSubmit(form) {
     }));
   }
   closeSheet();
+  if (compareId) { toast("Added to comparison"); render(); return; }
   viewDate = date;
   location.hash = "#today";
   render();
@@ -429,6 +469,7 @@ function openEditSheet(date, id) {
   openSheet(`<h2>${esc(e.name)}</h2>
     <form id="editForm" class="form">
       ${portion}
+      ${e.sweetAdded != null && e.sweetOptions ? `<label>Sweetness<select name="sweet">${e.sweetOptions.map(o => `<option value="${o.factor}"${o.factor === (e.sweetFactor ?? 1) ? " selected" : ""}>${esc(o.label)}</option>`).join("")}</select></label>` : ""}
       <label>Mealtime<select name="meal">${mealOptions(e.meal)}</select></label>
       <p class="preview" id="editPreview"></p>
       <div class="row"><button class="btn" type="button" data-action="close-sheet">Cancel</button><button class="btn primary" type="submit">Save changes</button></div></form>`);
@@ -450,7 +491,14 @@ function editSelection(form) {
     label = e.foodId ? `${+mult.toFixed(2)} × serving` : `your estimate${mult === 1 ? "" : ` × ${+mult.toFixed(2)}`}`;
     extra = { count: +mult.toFixed(2) };
   }
-  return { e, base, mult, label, extra, n: scaleNutrition(base, mult) };
+  let n = scaleNutrition(base, mult);
+  if (e.sweetAdded != null) {                                       // drinks: re-apply the chosen sweetness to the new portion
+    const factor = els.sweet ? Number(els.sweet.value) : (e.sweetFactor ?? 1);
+    n = applySweetness(n, e.sweetAdded * mult, factor);
+    extra.sweetFactor = factor;
+    if (sweetShort(factor)) label += " · " + sweetShort(factor);
+  }
+  return { e, base, mult, label, extra, n };
 }
 
 function updateEditPreview() {
@@ -468,6 +516,55 @@ function saveEdit(form) {
   editCtx = null;
   closeSheet();
   toast(moved ? `Moved to ${MEALS.find(m => m.id === meal).label}` : "Portion updated");
+}
+
+// ---- meal comparison helpers
+const pickButton = (f, action) => `<button class="favpick" data-action="${action}" data-id="${esc(f.id)}"><span class="name">${esc(f.name)}</span>
+  <span class="sub">${fmt(f.nutrition_per_serving.energy_kcal)} kcal · ${esc(f.serving.amount)} ${esc(f.serving.unit)}</span></button>`;
+
+function openPickSheet(optId) {
+  pickTarget = optId;
+  openSheet(`<h2>Add a food</h2>
+    <input id="pickQ" type="search" placeholder="Search foods and drinks…" autocomplete="off" aria-label="Search foods and drinks">
+    <div id="pickList" class="picklist"></div>
+    <div class="row"><button class="btn" data-action="close-sheet">Close</button></div>`);
+  renderPickList();
+  setTimeout(() => $("#pickQ")?.focus(), 50);
+}
+
+function renderPickList() {
+  const box = $("#pickList"), input = $("#pickQ");
+  if (!box || !input) return;
+  const terms = input.value.toLowerCase().split(/\s+/).filter(Boolean), s = getState(), foods = allFoods();
+  let list, note = "";
+  if (!terms.length) {
+    const favs = favoriteFoods(s, foods);
+    list = [...favs, ...recentFoods(s, foods, { limit: 8, exclude: favs.map(f => f.id) })];
+    note = list.length ? "★ Favourites and recently logged. Type to search everything." : "Type to search foods and drinks.";
+  } else list = foods.filter(f => terms.every(t => f.name.toLowerCase().includes(t))).slice(0, 25);
+  box.innerHTML = (note ? `<p class="fine">${note}</p>` : "") + (list.length ? list.map(f => pickButton(f, "pick-food")).join("") : '<p class="muted">No matches.</p>');
+}
+
+function openCopySheet(optId) {
+  const today = todayStr();
+  openSheet(`<h2>Copy from my log</h2>
+    <form id="cmpCopyForm" class="form" data-opt="${esc(optId)}">
+      <label>Date<input type="date" name="date" value="${today}" max="${today}" required></label>
+      <label>Mealtime<select name="meal">${mealOptions(mealByTime())}</select></label>
+      <p class="fine">Copies everything logged in that mealtime into this option.</p>
+      <div class="row"><button class="btn" type="button" data-action="close-sheet">Cancel</button><button class="btn primary" type="submit">Copy</button></div></form>`);
+}
+
+function openChooseSheet(optId) {
+  const o = getState().compare.options.find(x => x.id === optId);
+  if (!o) return;
+  const today = todayStr();
+  openSheet(`<h2>Go with ${esc(o.name)}</h2>
+    <p class="muted">Logs ${o.items.length} item${o.items.length === 1 ? "" : "s"} (${fmt(o.items.reduce((a, i) => a + (i.n?.energy_kcal || 0), 0))} kcal).</p>
+    <form id="cmpLogForm" class="form" data-opt="${esc(optId)}">
+      <label>Mealtime<select name="meal">${mealOptions(mealByTime())}</select></label>
+      <label>Date<input type="date" name="date" value="${today}" max="${today}" required></label>
+      <div class="row"><button class="btn" type="button" data-action="close-sheet">Cancel</button><button class="btn primary" type="submit">Add to my log</button></div></form>`);
 }
 
 // ------------------------------------------------------------------ events
@@ -489,7 +586,33 @@ document.addEventListener("click", e => {
     case "clear-filters": resetFilters(); break;
     case "add-describe": openCustomSheet({ date: viewDate, meal: el.dataset.meal }); break;
     case "describe-open": openCustomSheet(addCtx || {}); break;
-    case "cancel-add": addCtx = null; render(); break;
+    case "cancel-add": {                                   // done adding: back to that meal's day on the Today tab
+      const ctx = addCtx; addCtx = null;
+      if (ctx) {
+        viewDate = ctx.date; ui.todayMode = "day"; location.hash = "#today"; render();
+        setTimeout(() => $(`#meal-${ctx.meal}`)?.scrollIntoView({ block: "start", behavior: "smooth" }), 80);
+      } else render();
+      break;
+    }
+    case "clear-search": $("#q").value = ""; shown = PAGE; renderFoods(); $("#q").focus(); break;
+    case "toggle-info": {
+      const id = el.dataset.id;
+      expanded.has(id) ? expanded.delete(id) : expanded.add(id);
+      const f = allFoods().find(x => x.id === id), card = document.querySelector(`article[data-id="${id}"]`);
+      if (card && f) card.outerHTML = foodCard(f); else renderFoods();
+      break;
+    }
+    case "cmp-new": update(s => { if (s.compare.options.length < MAX_OPTIONS) s.compare.options.push(newOption(s.compare.options)); }); break;
+    case "cmp-remove": update(s => { if (s.compare.options.length > 2) s.compare.options = s.compare.options.filter(o => o.id !== el.dataset.opt); }); break;
+    case "cmp-del-item": update(s => { const o = s.compare.options.find(x => x.id === el.dataset.opt); if (o) o.items = o.items.filter(i => i.id !== el.dataset.id); }); break;
+    case "cmp-reset":
+      if (confirm("Clear all comparison options?")) update(s => { s.compare.options = []; s.compare.options.push(newOption([])); s.compare.options.push(newOption(s.compare.options)); });
+      break;
+    case "cmp-add": openPickSheet(el.dataset.opt); break;
+    case "pick-food": openLogSheet(allFoods().find(f => f.id === el.dataset.id), undefined, { compare: pickTarget }); break;
+    case "cmp-describe": openCustomSheet({ compare: el.dataset.opt }); break;
+    case "cmp-copy": openCopySheet(el.dataset.opt); break;
+    case "cmp-choose": openChooseSheet(el.dataset.opt); break;
     case "log-food": openLogSheet(allFoods().find(f => f.id === el.dataset.id)); break;
     case "del-custom":
       if (confirm("Delete this custom food? Past log entries are kept.")) update(s => { s.customFoods = s.customFoods.filter(f => f.id !== el.dataset.id); s.favorites = (s.favorites || []).filter(id => id !== el.dataset.id); });
@@ -540,14 +663,40 @@ document.addEventListener("submit", e => {
     const kg = Number(v.kg), latest = getState().weights.at(-1);
     if (!latest || latest.kg !== kg) setWeight(todayStr(), kg, timeStr());
     toast("Profile saved");
+  } else if (f.id === "quickWeight") {
+    e.preventDefault();
+    setWeight(todayStr(), Number(f.kg.value), timeStr());
+    toast("Weight saved");
   } else if (f.id === "logForm") {
     e.preventDefault();
     const sel = logSelection(f);
-    addLogEntry(f.date.value, { meal: f.meal.value, name: sel.food.name, n: sel.n,
-      source: sel.food.data_quality?.status === "custom" ? "custom" : "database", ...foodEntryFields(sel.food, sel) });
+    const fields = { name: sel.food.name, n: sel.n, source: sel.food.data_quality?.status === "custom" ? "custom" : "database", ...foodEntryFields(sel.food, sel) };
+    if (f.dataset.compare) {                                         // building a meal option, not logging
+      addCompareItem(f.dataset.compare, fields);
+      closeSheet();
+      toast("Added to comparison");
+    } else {
+      addLogEntry(f.date.value, { meal: f.meal.value, ...fields });
+      closeSheet();
+      toast(`Added to ${MEALS.find(m => m.id === f.meal.value).label}`);
+      if (!addCtx) { viewDate = f.date.value; }
+    }
+  } else if (f.id === "cmpCopyForm") {
+    e.preventDefault();
+    const items = (getState().log[f.date.value] || []).filter(x => x.meal === f.meal.value);
+    if (!items.length) { toast("Nothing logged there"); return; }
+    for (const it of items) addCompareItem(f.dataset.opt, cloneItem(it));
     closeSheet();
-    toast(`Added to ${MEALS.find(m => m.id === f.meal.value).label}`);
-    if (!addCtx) { viewDate = f.date.value; }
+    toast(`Copied ${items.length} item${items.length === 1 ? "" : "s"}`);
+  } else if (f.id === "cmpLogForm") {
+    e.preventDefault();
+    const o = getState().compare.options.find(x => x.id === f.dataset.opt);
+    if (!o) return;
+    for (const it of o.items) addLogEntry(f.date.value, { meal: f.meal.value, ...cloneItem(it) });
+    closeSheet();
+    viewDate = f.date.value; ui.todayMode = "day";
+    location.hash = "#today"; render();
+    toast(`Added ${o.name} to ${MEALS.find(m => m.id === f.meal.value).label}`);
   } else if (f.id === "editForm") {
     e.preventDefault();
     saveEdit(f);
@@ -561,6 +710,7 @@ document.addEventListener("input", e => {
   const t = e.target;
   if (t.closest("#logForm")) return updateLogPreview();
   if (t.closest("#editForm")) return updateEditPreview();
+  if (t.id === "pickQ") return renderPickList();
   if (t.id === "csSave") { $("#csNameWrap").hidden = !t.checked; return; }
   if (t.dataset?.ci != null && cs?.items) {
     const i = +t.dataset.ci, it = cs.items[i];
@@ -573,7 +723,23 @@ document.addEventListener("input", e => {
 
 document.addEventListener("change", e => {
   const t = e.target;
-  if (t.classList.contains("serving-select")) {
+  if (t.dataset?.pref) {                                             // Profile -> Display: which nutrients to show
+    update(s => {
+      s.prefs ||= { nutrientMode: "all", nutrients: [] };
+      if (t.dataset.pref === "mode") {
+        s.prefs.nutrientMode = t.value;
+        if (t.value === "custom" && !s.prefs.nutrients.length) s.prefs.nutrients = NUTRIENTS.map(n => n.key);
+      } else {
+        const set = new Set(s.prefs.nutrients);
+        t.checked ? set.add(t.value) : set.delete(t.value);
+        s.prefs.nutrients = [...set];
+      }
+    });
+  } else if (t.dataset?.cmpName) {
+    update(s => { const o = s.compare.options.find(x => x.id === t.dataset.cmpName); if (o) o.name = t.value.trim() || o.name; });
+  } else if (t.dataset?.cmp === "include-today") {
+    update(s => { s.compare.includeToday = t.checked; });
+  } else if (t.classList.contains("serving-select")) {
     const id = t.closest("article").dataset.id;
     servingChoice[id] = Number(t.value);
     const f = allFoods().find(x => x.id === id);
@@ -586,6 +752,8 @@ document.addEventListener("change", e => {
       if (t.value === "__manual") { it.confidence = "unknown"; it.food = null; }
       else cs.items[i] = chooseFood(it, it.candidates.find(c => c.food.id === t.value).food);
       renderCsResults();
+    } else if (t.dataset.f === "sweet" && it.food) {
+      cs.items[i] = setSweetness(it, Number(t.value)); renderCsResults();
     } else if (t.dataset.f === "mult" && it.food) {
       cs.items[i] = setMultiplier(it, Math.max(0.1, Number(t.value) || 1)); renderCsResults();
     }
@@ -593,6 +761,7 @@ document.addEventListener("change", e => {
 });
 
 $("#reset").addEventListener("click", resetFilters);
+document.addEventListener("gesturestart", e => e.preventDefault());   // block pinch-zoom on iOS Safari
 sheet().addEventListener("click", e => { if (e.target === sheet()) closeSheet(); });
 sheet().addEventListener("close", () => { cs = null; });
 window.addEventListener("hashchange", route);

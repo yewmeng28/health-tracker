@@ -94,9 +94,21 @@ button.link { background: none; border: 0; color: var(--accent); cursor: pointer
 .bar.small { height: 6px; }
 .bar .fill { height: 100%; border-radius: 99px; background: var(--low); }
 .bar .fill.medium { background: var(--medium); } .bar .fill.high { background: var(--high); }
-.bar .mark { position: absolute; top: -3px; bottom: -3px; width: 2px; background: var(--muted); opacity: .7; border-radius: 2px; }
-.bar .mark.tgt { background: var(--accent); opacity: 1; } .bar .mark.max { background: var(--high); opacity: .8; }
-.klabels { display: flex; justify-content: space-between; font-size: 12px; color: var(--muted); }
+.bar .mark { position: absolute; top: -4px; bottom: -4px; width: 3px; margin-left: -1.5px; border-radius: 2px; background: var(--muted); }
+.bar .mark.min { background: var(--medium); }
+.bar .mark.tgt { background: var(--accent); width: 4px; margin-left: -2px; top: -6px; bottom: -6px; box-shadow: 0 0 0 1.5px var(--card); }
+.bar .mark.max { background: var(--high); }
+.kzones { display: flex; height: 6px; border-radius: 99px; overflow: hidden; margin-top: 8px; }
+.kzones .z { display: block; height: 100%; }
+.z.low, .sw.low { background: color-mix(in srgb, var(--medium) 45%, var(--card)); }
+.z.ok, .sw.ok { background: color-mix(in srgb, var(--low) 45%, var(--card)); }
+.z.high, .sw.high { background: color-mix(in srgb, var(--high) 45%, var(--card)); }
+.sw { display: inline-block; width: 10px; height: 10px; border-radius: 3px; vertical-align: -1px; margin-right: 4px; }
+.sw.min { background: var(--medium); } .sw.tgt { background: var(--accent); } .sw.max { background: var(--high); }
+.klegend { list-style: none; margin: 10px 0 6px; padding: 0; display: grid; gap: 4px; font-size: 14px; }
+.klegend li { display: flex; align-items: baseline; gap: 6px; }
+.klegend small { color: var(--muted); }
+.tickkey { margin: -4px 0 8px; }
 .msg { margin: 10px 0 0; font-weight: 500; }
 .msg.muted { font-weight: 400; }
 .nrow { margin-bottom: 8px; }
@@ -246,3 +258,59 @@ button.icon.star { font-size: 22px; line-height: 1; padding: 4px 8px; }
 .sheetbody h3 { font-size: .95rem; margin: 4px 0 0; }
 .chip small { color: var(--muted); }
 .mealbtns .btn { min-width: 30%; }
+
+/* ---------- no zoom on mobile ---------- */
+html, body { touch-action: pan-x pan-y; }            /* scrolling only: no pinch or double-tap zoom */
+/* iOS zooms into inputs below 16px, so keep them at 16px */
+input, select, textarea, .btn { font-size: 16px; }
+.btn.small, .serving-select { font-size: 14px; }
+label > input, label > select { font-size: 16px; }
+
+/* ---------- search clear button ---------- */
+.searchwrap { position: relative; margin-bottom: 8px; }
+.searchwrap .bigsearch { margin-bottom: 0; padding-right: 44px; }
+.searchwrap input::-webkit-search-cancel-button { -webkit-appearance: none; display: none; }
+.clearbtn { position: absolute; right: 6px; top: 50%; transform: translateY(-50%); width: 34px; height: 34px; border: 0; border-radius: 50%;
+  background: var(--track); color: var(--muted); font-size: 15px; cursor: pointer; line-height: 1; }
+.clearbtn:hover { color: var(--text); }
+
+/* ---------- simple food cards ---------- */
+.food.simple .head { align-items: center; }
+.food .details { margin-top: 10px; padding-top: 10px; border-top: 1px solid var(--border); }
+label.inline { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
+label.inline select { width: auto; margin: 0; }
+.cardbtns { flex-wrap: wrap; }
+
+/* ---------- weight card on Today ---------- */
+.wcard { display: flex; justify-content: space-between; align-items: center; gap: 10px; flex-wrap: wrap; }
+.wcard.remind { display: grid; border-color: var(--medium); background: color-mix(in srgb, #e2b53c 12%, var(--card)); }
+.wcard form { align-items: flex-end; }
+.wcard form label { flex: 1 1 120px; }
+
+/* ---------- display settings (Profile) ---------- */
+.radios { display: grid; gap: 6px; margin: 8px 0; }
+.checklist { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 6px 12px; }
+.checklist.off { opacity: .5; }
+
+/* ---------- meal comparison ---------- */
+.cmphead { display: flex; gap: 8px; align-items: center; margin-bottom: 6px; }
+.cmpname { font-weight: 600; flex: 1; }
+.cmptotal { margin: 6px 0 0; }
+.verdict { border-width: 2px; }
+.verdict.best { border-color: var(--low); background: color-mix(in srgb, var(--low) 10%, var(--card)); }
+.verdict.tie { border-color: var(--medium); }
+.verdict h2 { margin-bottom: 6px; } .verdict p { margin: 0; }
+.tablewrap { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+.cmptable { border-collapse: collapse; width: 100%; min-width: 320px; font-size: 14px; }
+.cmptable th, .cmptable td { padding: 8px 8px; border-top: 1px solid var(--border); text-align: right; vertical-align: top; }
+.cmptable thead th { border-top: 0; text-align: right; }
+.cmptable th:first-child, .cmptable td:first-child { text-align: left; color: var(--muted); font-weight: 500; position: sticky; left: 0; background: var(--card); }
+.cmptable td.win { background: color-mix(in srgb, var(--low) 16%, var(--card)); font-weight: 600; }
+.winmark, .bestbadge { color: var(--low); font-size: 12px; white-space: nowrap; }
+.cmptable td.fit small { display: block; font-weight: 400; color: var(--muted); }
+.cmptable td.fit.ok { color: var(--low); } .cmptable td.fit.warn { color: var(--medium); } .cmptable td.fit.over { color: var(--high); }
+.center { text-align: center; margin: 12px 0; }
+
+/* ---------- limits exceeded (Today) ---------- */
+.overlist { list-style: none; margin: 8px 0 0; padding: 8px 10px; border-radius: 8px; display: grid; gap: 3px; font-size: 14px;
+  background: color-mix(in srgb, var(--high) 10%, var(--card)); border: 1px solid color-mix(in srgb, var(--high) 40%, var(--card)); }

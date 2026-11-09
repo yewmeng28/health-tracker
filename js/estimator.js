@@ -2,7 +2,7 @@
 // Matches free text against the food database, reads quantities/units/sizes, and
 // reports how confident it is. Vague or unmatched parts must be estimated by the user.
 
-import { NUTRIENT_KEYS } from "./calc.js";
+import { NUTRIENT_KEYS, applySweetness } from "./calc.js";
 
 const NUMWORDS = { a: 1, an: 1, one: 1, two: 2, three: 3, four: 4, five: 5, six: 6, seven: 7, eight: 8, nine: 9,
   ten: 10, half: 0.5, quarter: 0.25, double: 2, couple: 2, dozen: 12 };
@@ -13,6 +13,8 @@ const GENERIC = new Set(["food", "meal", "dinner", "lunch", "breakfast", "snack"
 const PIECE_UNITS = new Set(["piece", "pcs", "pc", "slice", "stick", "skewer", "egg", "roll", "bun"]);
 const DRINK_UNITS = ["pint", "shot", "can", "bottle", "glass", "jug", "tower", "double", "nip"];
 const UNIT_RE = /^(half pints?|bowls?|plates?|cups?|glass(?:es)?|cans?|bottles?|pints?|shots?|slices?|pieces?|pcs?|sticks?|skewers?|rolls?|buns?|packets?|tbsp|tsp|jugs?|nips?|servings?|portions?)\b\s*(?:of\b\s*)?/;
+const SWEET_LESS = /\b(less sweet|less sugar|low sugar|half sweet|siew dai|siu dai|shao tian)\b/;
+const SWEET_NONE = /\b(kosong|no sugar|zero sugar|sugar[- ]free|unsweetened|without sugar)\b/;
 const SIZE_WORDS = [[/\b(extra[- ]large|xl|jumbo)\b/, 1.5], [/\b(large|big)\b/, 1.3], [/\b(small|mini)\b/, 0.7], [/\bmedium\b/, 1]];
 
 const norm = t => {
@@ -59,7 +61,7 @@ function countInName(name) {
 /** Break a phrase into quantity / unit / explicit amount / size / remaining words. */
 export function parsePhrase(raw) {
   let s = (" " + raw.toLowerCase() + " ").replace(/[()]/g, " ").replace(/\s+/g, " ").trim();
-  let qty = null, unit = null, size = 1, amount = null;
+  let qty = null, unit = null, size = 1, amount = null, sweet = null;
 
   const am = s.match(/(\d+(?:\.\d+)?)\s*(ml|l|g|kg)\b/);
   if (am) {
@@ -67,6 +69,9 @@ export function parsePhrase(raw) {
     amount = am[2] === "l" || am[2] === "kg" ? { value: v * 1000, unit: am[2] === "l" ? "ml" : "g" } : { value: v, unit: am[2] };
     s = s.replace(am[0], " ").trim();
   }
+  const noneM = s.match(SWEET_NONE), lessM = s.match(SWEET_LESS);        // "kopi siew dai", "teh o kosong"
+  if (noneM) { sweet = 0; s = s.replace(noneM[0], " ").trim(); }
+  else if (lessM) { sweet = 0.5; s = s.replace(lessM[0], " ").trim(); }
   for (const [re, f] of SIZE_WORDS) if (re.test(s)) { size = f; s = s.replace(re, " ").trim(); }
 
   const qm = s.match(/^(\d+(?:\.\d+)?\s*\/\s*\d+|\d+(?:\.\d+)?|a couple of|a couple|couple|an|a|one|two|three|four|five|six|seven|eight|nine|ten|half|quarter|double|dozen)\b\s*(?:x|×)?\s*/);
@@ -84,7 +89,7 @@ export function parsePhrase(raw) {
       s = s.slice(um[0].length);
     }
   }
-  return { text: raw.trim(), qty, unit, size, amount, words: s.trim() };
+  return { text: raw.trim(), qty, unit, size, amount, sweet, words: s.trim() };
 }
 
 function multiplierFor(food, p) {
@@ -108,11 +113,12 @@ function multiplierFor(food, p) {
   return { m, label: `${+m.toFixed(2)} × serving (${food.serving?.amount} ${food.serving?.unit})` };
 }
 
-export function nutritionOfFood(food, mult) {
+/** Nutrition for `mult` servings of a food; `factor` is the sweetness (1 regular, 0.5 less sweet, 0 no added sugar). */
+export function nutritionOfFood(food, mult, factor = 1) {
   const out = Object.fromEntries(NUTRIENT_KEYS.map(k => [k, 0]));
   const n = food.nutrition_per_serving || {};
   for (const k of NUTRIENT_KEYS) out[k] = Math.round((Number(n[k]) || 0) * mult * 10) / 10;
-  return out;
+  return food.sweetness && factor !== 1 ? applySweetness(out, food.sweetness.added_sugar_g * mult, factor) : out;
 }
 
 function matchPhrase(p, index) {
@@ -126,10 +132,11 @@ function matchPhrase(p, index) {
     confidence = top.score >= 0.6 && clear ? "high" : "check";
   }
   const item = { ...p, candidates, food: confidence === "unknown" ? null : top.food, confidence, vague,
-    mult: null, label: "", nutrition: null };
+    mult: null, label: "", nutrition: null, sweetFactor: 1 };
   if (item.food) {
     const { m, label } = multiplierFor(item.food, p);
-    Object.assign(item, { mult: m, label, nutrition: nutritionOfFood(item.food, m) });
+    const sweetFactor = item.food.sweetness ? (p.sweet ?? 1) : 1;
+    Object.assign(item, { mult: m, label, sweetFactor, nutrition: nutritionOfFood(item.food, m, sweetFactor) });
   }
   return item;
 }
@@ -137,11 +144,16 @@ function matchPhrase(p, index) {
 /** Re-pick a different candidate food for an item. */
 export function chooseFood(item, food) {
   const { m, label } = multiplierFor(food, item);
-  return { ...item, food, confidence: "high", mult: m, label, nutrition: nutritionOfFood(food, m) };
+  const sweetFactor = food.sweetness ? (item.sweetFactor ?? item.sweet ?? 1) : 1;
+  return { ...item, food, confidence: "high", mult: m, label, sweetFactor, nutrition: nutritionOfFood(food, m, sweetFactor) };
 }
 
 export function setMultiplier(item, mult) {
-  return { ...item, mult, label: `${+mult.toFixed(2)} × serving`, nutrition: nutritionOfFood(item.food, mult) };
+  return { ...item, mult, label: `${+mult.toFixed(2)} × serving`, nutrition: nutritionOfFood(item.food, mult, item.sweetFactor ?? 1) };
+}
+
+export function setSweetness(item, factor) {
+  return { ...item, sweetFactor: factor, nutrition: nutritionOfFood(item.food, item.mult, factor) };
 }
 
 /** Parse a free-text description into items. */

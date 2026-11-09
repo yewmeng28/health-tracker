@@ -662,6 +662,52 @@ SERVING_OPTIONS = {
     "Steamed broccoli, 1 cup": [("1 cup (90 g)", 90), ("Half cup (45 g)", 45)],
 }
 
+# Everyday hawker / kopitiam drinks (appended; ids continue)
+foods += [
+("Kopi O (coffee with sugar)","Singapore","drink","kopi_o",250),
+("Kopi O bing (iced, with sugar)","Singapore","drink","kopi_o_bing",300),
+("Teh (tea with condensed milk)","Singapore","drink","teh_con",250),
+("Teh C (tea with evaporated milk and sugar)","Singapore","drink","teh_c_hot",250),
+("Teh O (tea with sugar)","Singapore","drink","teh_o",250),
+("Teh O bing (iced tea with sugar)","Singapore","drink","teh_o_bing",300),
+("Teh O kosong (tea, no sugar)","Singapore","drink","black_tea",250),
+("Teh halia (ginger tea)","Singapore","drink","teh_halia",250),
+("Milo (hot)","Singapore","drink","milo_hot",250),
+("Milo bing (iced)","Singapore","drink","milo_bing",300),
+("Horlicks (hot)","Singapore","drink","horlicks",250),
+("Bandung (rose syrup milk)","Singapore","drink","bandung",300),
+("Soya bean milk, sweetened","Singapore","drink","soya_sweet",250),
+("Chrysanthemum tea","Singapore","drink","chrysanthemum",250),
+("Lemon barley drink","Singapore","drink","lemon_barley",250),
+("Winter melon tea","Singapore","drink","winter_melon",250),
+("Iced lemon tea","Singapore","drink","ice_lemon_tea",300),
+("Sour plum drink (asam boi)","Singapore","drink","sour_plum",250),
+("Longan and red date tea","Singapore","drink","longan_date",250),
+("100PLUS isotonic drink, 1 can","Singapore","drink","plus100",325),
+("Coca-Cola, 1 can","General","drink","cola",325),
+("Sprite, 1 can","General","drink","sprite",325),
+]
+
+# Sweetness choices for drinks sweetened with sugar / condensed milk / syrup.
+# name -> grams of the drink's sugar that can be reduced (per default serving). The rest (e.g. milk sugar) stays.
+SWEETNESS_OPTIONS = [
+    {"id": "regular", "label": "Regular", "factor": 1},
+    {"id": "less", "label": "Less sweet (siew dai, half the sugar)", "factor": 0.5},
+    {"id": "none", "label": "No added sugar (kosong)", "factor": 0},
+]
+SWEETNESS = {
+    "Kopi O (coffee with sugar)": 10, "Kopi O bing (iced, with sugar)": 10,
+    "Teh (tea with condensed milk)": 12, "Teh C (tea with evaporated milk and sugar)": 9,
+    "Teh O (tea with sugar)": 10, "Teh O bing (iced tea with sugar)": 10, "Teh halia (ginger tea)": 12.5,
+    "Milo (hot)": 14, "Milo bing (iced)": 14, "Horlicks (hot)": 14, "Bandung (rose syrup milk)": 22,
+    "Soya bean milk, sweetened": 12, "Chrysanthemum tea": 17, "Lemon barley drink": 20, "Winter melon tea": 18,
+    "Iced lemon tea": 20, "Sour plum drink (asam boi)": 24, "Longan and red date tea": 22,
+    # existing drinks
+    "Kopi (with condensed milk)": 12, "Kopi C (evaporated milk and sugar)": 10, "Teh tarik": 12, "Milo dinosaur": 18,
+    "Barley water, sweetened": 20, "Grass jelly drink": 20, "Yuan yang, 1 cup": 12, "Teh C bing, 1 cup": 10,
+    "Kopi bing, 1 cup": 13, "Lime juice, 1 cup": 20,
+}
+
 # Per-dish notes appended to data_quality.notes
 NOTES = {
     "Kaya toast set with 2 soft-boiled eggs": "Combined estimate (kaya toast + eggs); blended from the kaya toast and soft-boiled egg profiles. Excludes coffee/tea.",
